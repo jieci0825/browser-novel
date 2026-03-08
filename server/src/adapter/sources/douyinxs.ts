@@ -20,7 +20,7 @@ export const douyinxsRule: BookSourceRule = {
         method: 'POST',
         body: 'searchkey={{keyword}}&Submit=',
         contentType: 'application/x-www-form-urlencoded',
-        list: '.novelslist2 li',
+        list: '.novelslist2 ul li',
         excludePattern: '^作品名称$',
         cooldown: 120000,
         fields: {

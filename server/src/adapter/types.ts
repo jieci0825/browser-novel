@@ -1,26 +1,26 @@
 /** 搜索结果 */
 export interface BookSearchItem {
-    sourceId: string
-    bookId: string
-    name: string
-    author: string
-    intro?: string
-    latestChapter?: string
-    wordCount?: string
-    status?: string
+    sourceId: string // 来源 ID
+    bookId: string // 书籍 ID
+    name: string // 书籍名称
+    author: string // 作者
+    intro?: string // 简介
+    latestChapter?: string // 最新章节
+    wordCount?: string // 字数
+    status?: string // 状态
 }
 
 /** 书籍详情 */
 export interface BookDetail {
-    sourceId: string
-    bookId: string
-    name: string
-    author: string
-    intro?: string
-    latestChapter?: string
-    wordCount?: string
-    status?: string
-    category?: string
+    sourceId: string // 来源 ID
+    bookId: string // 书籍 ID
+    name: string // 书籍名称
+    author: string // 作者
+    intro?: string // 简介
+    latestChapter?: string // 最新章节
+    wordCount?: string // 字数
+    status?: string // 状态
+    category?: string // 分类
 }
 
 /** 章节列表项 */

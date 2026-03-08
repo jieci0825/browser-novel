@@ -5,7 +5,7 @@ import { withAdapterExceptionAspect } from './aspect'
 import { douyinxsRule } from './sources/douyinxs'
 
 const adapters = [
-    // withAdapterExceptionAspect(new QQReaderAdapter()),
+    withAdapterExceptionAspect(new QQReaderAdapter()),
     withAdapterExceptionAspect(new RuleBasedAdapter(douyinxsRule)),
 ]
 
