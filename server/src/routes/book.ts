@@ -12,7 +12,6 @@ router.get('/sources', ctx => {
 
 /** 搜索（聚合所有书源，NDJSON 流式返回） */
 router.get('/search', async ctx => {
-    console.log('search', ctx.query)
     const keyword = (ctx.query.keyword as string) || ''
 
     if (!keyword.trim()) {
