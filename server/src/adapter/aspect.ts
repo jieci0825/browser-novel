@@ -1,4 +1,8 @@
-import { AppException, SourceTimeoutException, SourceUnavailableException } from '../exception/app-exception'
+import {
+    AppException,
+    SourceTimeoutException,
+    SourceUnavailableException,
+} from '../exception/app-exception'
 import type { BookSourceAdapter } from './types'
 
 type AdapterMethod = keyof Pick<
@@ -45,6 +49,9 @@ function mapAdapterException(sourceId: string, error: unknown): AppException {
     return new SourceUnavailableException(sourceId, message, error)
 }
 
+/**
+ * 为书源适配器添加异常处理和超时处理
+ */
 export function withAdapterExceptionAspect(
     adapter: BookSourceAdapter,
     timeoutMs = DEFAULT_TIMEOUT_MS
@@ -52,6 +59,8 @@ export function withAdapterExceptionAspect(
     return new Proxy(adapter, {
         get(target, prop, receiver) {
             const value = Reflect.get(target, prop, receiver)
+
+            // 如果方法不是字符串或不是函数或不是适配器方法，则直接返回方法
             if (
                 typeof prop !== 'string' ||
                 typeof value !== 'function' ||
@@ -60,6 +69,7 @@ export function withAdapterExceptionAspect(
                 return value
             }
 
+            // 如果方法是通过反射获取的，则直接返回方法
             return async (...args: unknown[]) => {
                 try {
                     const result = value.apply(target, args) as Promise<unknown>

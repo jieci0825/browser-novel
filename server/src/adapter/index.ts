@@ -1,11 +1,12 @@
 import { adapterManager } from './manager'
 import { QQReaderAdapter } from './qq-reader'
-import { HuanxiangAdapter } from './huanxiang'
+import { RuleBasedAdapter } from './rule-based/adapter'
 import { withAdapterExceptionAspect } from './aspect'
+import { douyinxsRule } from './sources/douyinxs'
 
 const adapters = [
-    withAdapterExceptionAspect(new QQReaderAdapter()),
-    withAdapterExceptionAspect(new HuanxiangAdapter()),
+    // withAdapterExceptionAspect(new QQReaderAdapter()),
+    withAdapterExceptionAspect(new RuleBasedAdapter(douyinxsRule)),
 ]
 
 for (const adapter of adapters) {
