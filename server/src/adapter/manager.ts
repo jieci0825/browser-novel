@@ -1,4 +1,5 @@
 import type { BookSourceAdapter, BookSearchItem } from './types'
+import { SourceNotFoundException } from '../exception/app-exception'
 
 /**
  * 适配器管理器
@@ -13,7 +14,7 @@ class AdapterManager {
     get(sourceId: string): BookSourceAdapter {
         const adapter = this.adapters.get(sourceId)
         if (!adapter) {
-            throw new Error(`书源 "${sourceId}" 不存在`)
+            throw new SourceNotFoundException(sourceId)
         }
         return adapter
     }

@@ -2,25 +2,17 @@ import Koa from 'koa'
 import cors from '@koa/cors'
 import bookRouter from './routes/book'
 import { browserPool } from './browser/pool'
+import { requestContextMiddleware } from './middleware/request-context'
+import { responseMiddleware } from './middleware/response'
+import { exceptionMiddleware } from './middleware/exception'
 
 const app = new Koa()
 const PORT = Number(process.env.PORT) || 3001
 
 app.use(cors())
-
-/** 全局错误处理 */
-app.use(async (ctx, next) => {
-    try {
-        await next()
-    } catch (err: any) {
-        console.error(`[${ctx.method} ${ctx.url}]`, err.message)
-        ctx.status = 200
-        ctx.body = {
-            code: 500,
-            message: err.message || '服务器内部错误',
-        }
-    }
-})
+app.use(requestContextMiddleware)
+app.use(responseMiddleware)
+app.use(exceptionMiddleware)
 
 app.use(bookRouter.routes())
 app.use(bookRouter.allowedMethods())
