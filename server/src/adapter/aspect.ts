@@ -5,18 +5,8 @@ import {
 } from '../exception/app-exception'
 import type { BookSourceAdapter } from './types'
 
-type AdapterMethod = keyof Pick<
-    BookSourceAdapter,
-    'search' | 'getDetail' | 'getChapters' | 'getContent'
->
-
 const DEFAULT_TIMEOUT_MS = 20000
-const ADAPTER_METHODS: AdapterMethod[] = [
-    'search',
-    'getDetail',
-    'getChapters',
-    'getContent',
-]
+const ADAPTER_METHODS = ['search', 'getDetail', 'getChapters', 'getContent']
 
 function withTimeout<T>(
     promise: Promise<T>,
@@ -24,6 +14,7 @@ function withTimeout<T>(
     timeoutMs: number
 ): Promise<T> {
     return new Promise<T>((resolve, reject) => {
+        // 设置超时定时器
         const timer = setTimeout(() => {
             reject(new SourceTimeoutException(sourceId, timeoutMs))
         }, timeoutMs)
@@ -60,19 +51,17 @@ export function withAdapterExceptionAspect(
         get(target, prop, receiver) {
             const value = Reflect.get(target, prop, receiver)
 
-            // 如果方法不是字符串或不是函数或不是适配器方法，则直接返回方法
-            if (
-                typeof prop !== 'string' ||
-                typeof value !== 'function' ||
-                !ADAPTER_METHODS.includes(prop as AdapterMethod)
-            ) {
+            if (!ADAPTER_METHODS.includes(prop as string)) {
                 return value
             }
 
-            // 如果方法是通过反射获取的，则直接返回方法
             return async (...args: unknown[]) => {
                 try {
-                    const result = value.apply(target, args) as Promise<unknown>
+                    // 直接调用，拿到 promise 对象
+                    const result = (value as Function).apply(
+                        target,
+                        args
+                    ) as Promise<unknown>
                     return await withTimeout(result, target.sourceId, timeoutMs)
                 } catch (error) {
                     throw mapAdapterException(target.sourceId, error)

@@ -17,6 +17,7 @@ import {
     extractJsonField,
     getByPath,
 } from './field-parser'
+import { isArray } from '../../utils/check-type'
 
 const DEFAULT_UA =
     'Mozilla/5.0 (Linux; Android 10; V1824A Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.186 Mobile Safari/537.36'
@@ -327,7 +328,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         fields: Record<string, FieldRule | undefined>
     ): Record<string, string>[] {
         const arr = getByPath(data, listPath)
-        if (!Array.isArray(arr)) return []
+        if (!isArray(arr)) return []
         return arr.map(item => this.extractJsonFields(item, fields))
     }
 
