@@ -14,23 +14,37 @@ interface ParsedBranch {
     pipes: PipeOp[]
 }
 
+/**
+ * 解析 DSL 中的“选择器片段”，例如 ".title@text" 或 "a@href"
+ * @param raw 原始字符串
+ * @returns 解析后的选择器和提取方式
+ */
 function parseSelectorPart(raw: string): {
     selector: string
     extract: string
 } {
+    // 空规则兜底：没有输入时，返回空选择器 + 默认 text 提取
     if (!raw) return { selector: '', extract: 'text' }
+    // 尝试匹配 "选择器@提取方式" 结构：
+    // - 第 1 组 (.*?) 捕获 @ 前的选择器（允许为空）
+    // - 第 2 组 (\w+) 捕获 @ 后的提取标记（字母/数字/下划线）
     const match = raw.match(/^(.*?)@(\w+)$/)
+    // 匹配成功：按 "selector@extract" 拆分并返回
     if (match) {
+        // selector 做 trim 去掉首尾空白；extract 直接取匹配结果
         return { selector: match[1].trim(), extract: match[2] }
     }
+    // 未匹配到 @extract：把整个字符串当作 selector，并使用默认 text 提取
     return { selector: raw.trim(), extract: 'text' }
 }
 
 function parsePipe(raw: string): PipeOp {
     const trimmed = raw.trim()
+    // 如果是 regex: 开头，则表示正则提取
     if (trimmed.startsWith('regex:')) {
         return { type: 'regex', pattern: trimmed.slice(6), replacement: '' }
     }
+    // 如果是 replace: 开头，则表示正则替换
     if (trimmed.startsWith('replace:')) {
         const rest = trimmed.slice(8)
         const commaIdx = rest.indexOf(',')
@@ -47,8 +61,12 @@ function parsePipe(raw: string): PipeOp {
 }
 
 function parseBranch(raw: string): ParsedBranch {
+    // "|" 表示管道，依次处理每个管道。
     const parts = raw.split(' | ')
+    // 得到选择器和提取方式(@text, @src, #href...)
+    //  - 只有第一个管道任务会出现选择器，后面的管道任务都是对第一个管道任务的输出进行处理
     const { selector, extract } = parseSelectorPart(parts[0])
+    // 为后面的管道任务创建一个 PipeOp 对象
     const pipes = parts.slice(1).map(parsePipe)
     return { selector, extract, pipes }
 }
@@ -81,7 +99,6 @@ function extractValue(el: cheerio.Cheerio<any>, extract: string): string {
 
 /**
  * 从 HTML 中提取字段值
- *
  * @param $ cheerio 实例
  * @param context 上下文元素 — 列表遍历时为当前项，页面级别时为 $.root()
  * @param rule 字段提取规则 DSL 字符串
@@ -94,16 +111,26 @@ export function extractHtmlField(
 ): string {
     if (!rule) return ''
 
+    // "||" 表示回退，依次尝试每个分支，返回第一个非空结果。
     const branches = rule.split(' || ')
 
     for (const branchRaw of branches) {
         const branch = parseBranch(branchRaw.trim())
+
         const target = branch.selector
             ? context.find(branch.selector).first()
             : context
 
+        // 查看具体拿到的是那个 dom
+        //  - 例如：<a href="/bqg/1303656/" target="_blank">时停起手，邪神也得给我跪下！</a>
+        // console.log('[debug] target outerHTML =', $.html(target))
+
+        // 根据提取方式，从 dom 中提取值
         const raw = extractValue(target, branch.extract)
+
+        // 对提取到的值进行管道处理
         const value = applyPipes(raw, branch.pipes)
+
         if (value) return value
     }
 

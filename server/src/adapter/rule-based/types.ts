@@ -15,12 +15,12 @@ export type FieldRule = string
 
 /** 书源规则 */
 export interface BookSourceRule {
-    sourceId: string
-    sourceName: string
-    sourceUrl: string
-    sourceType?: 'html' | 'json'
+    sourceId: string // 书源 ID
+    sourceName: string // 书源名称
+    sourceUrl: string // 书源 URL
+    sourceType?: 'html' | 'json' // 书源类型
 
-    http?: HttpConfig
+    http?: HttpConfig // HTTP 配置
 
     search: SearchRule
     detail: DetailRule
@@ -36,19 +36,22 @@ export interface HttpConfig {
 }
 
 export interface SearchRule {
-    url: string
-    method?: 'GET' | 'POST'
-    body?: string
-    contentType?: string
+    url: string // 搜索 URL
+    method?: 'GET' | 'POST' // 请求方法
+    body?: string // 请求体
+    contentType?: string // 内容类型
 
     list: string
     /** 当提取到的 name 匹配此正则时跳过该项 */
     excludePattern?: string
 
+    // 字段提取规则
+    //  - 从搜索结果列表项中提取字段
     fields: {
         name: FieldRule
         bookId: FieldRule
         author?: FieldRule
+        cover?: FieldRule
         intro?: FieldRule
         latestChapter?: FieldRule
         wordCount?: FieldRule
@@ -66,6 +69,7 @@ export interface DetailRule {
     fields: {
         name: FieldRule
         author: FieldRule
+        cover?: FieldRule
         intro?: FieldRule
         latestChapter?: FieldRule
         wordCount?: FieldRule

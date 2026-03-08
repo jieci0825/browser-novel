@@ -387,6 +387,7 @@ search: {
         name: '.s2 a',           // [必填] 书名
         bookId: '.s2 a@href',    // [必填] 书籍 ID（传递给 detail/chapters）
         author: '.s4',           // [可选] 作者
+        cover: '.cover img@src', // [可选] 封面
         intro: '.intro',         // [可选] 简介
         latestChapter: '.s3 a',  // [可选] 最新章节
         wordCount: '.s5',        // [可选] 字数
@@ -413,6 +414,7 @@ detail: {
     fields: {
         name: '#info h1',          // [必填] 书名
         author: '#info p:nth-of-type(1) | replace:^作\\s*者[：:]\\s*,',  // [必填]
+        cover: '#fmimg img@src',   // [可选]
         intro: '#intro p:nth-of-type(2) || #intro',  // [可选]
         latestChapter: '#list a',  // [可选]
         wordCount: '#info p:nth-of-type(3) | regex:(\\d+(?:\\.\\d+)?[万千]?)\\s*字',
@@ -608,6 +610,7 @@ export const douyinxsRule: BookSourceRule = {
             name: '.s2 a',
             bookId: '.s2 a@href',
             author: '.s4',
+            cover: '.cover img@src',
             latestChapter: '.s3 a',
             wordCount: '.s5',
             status: '.s7',
@@ -619,6 +622,7 @@ export const douyinxsRule: BookSourceRule = {
         fields: {
             name: '#info h1',
             author: '#info p:nth-of-type(1) | replace:^作\\s*者[：:]\\s*,',
+            cover: '#fmimg img@src',
             intro: '#intro p:nth-of-type(2) || #intro',
             latestChapter: '#list a',
             wordCount:

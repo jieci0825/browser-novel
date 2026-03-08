@@ -4,6 +4,7 @@ export interface BookSearchItem {
     bookId: string // 书籍 ID
     name: string // 书籍名称
     author: string // 作者
+    cover?: string // 封面
     intro?: string // 简介
     latestChapter?: string // 最新章节
     wordCount?: string // 字数
@@ -16,6 +17,7 @@ export interface BookDetail {
     bookId: string // 书籍 ID
     name: string // 书籍名称
     author: string // 作者
+    cover?: string // 封面
     intro?: string // 简介
     latestChapter?: string // 最新章节
     wordCount?: string // 字数

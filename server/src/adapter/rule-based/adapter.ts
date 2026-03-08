@@ -7,32 +7,28 @@ import type {
     Chapter,
     ChapterContent,
 } from '../types'
-import type {
-    BookSourceRule,
-    ContentPurifyOptions,
-    FieldRule,
-} from './types'
-import {
-    extractHtmlField,
-    extractJsonField,
-    getByPath,
-} from './field-parser'
+import type { BookSourceRule, ContentPurifyOptions, FieldRule } from './types'
+import { extractHtmlField, extractJsonField, getByPath } from './field-parser'
 import { isArray } from '../../utils/check-type'
 
+// 默认用户代理
 const DEFAULT_UA =
     'Mozilla/5.0 (Linux; Android 10; V1824A Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.186 Mobile Safari/537.36'
 
+// 规则基础适配器
+//  - 必须实现 BookSourceAdapter 接口
 export class RuleBasedAdapter implements BookSourceAdapter {
     readonly sourceId: string
     readonly sourceName: string
 
-    private rule: BookSourceRule
+    private rule: BookSourceRule // 书源规则
     private http: AxiosInstance
     private lastSearchAt = 0
     private lastSearchKeyword = ''
     private lastSearchResults: BookSearchItem[] = []
 
     constructor(rule: BookSourceRule) {
+        // 初始化书源信息和 HTTP 客户端
         this.rule = rule
         this.sourceId = rule.sourceId
         this.sourceName = rule.sourceName
@@ -49,8 +45,10 @@ export class RuleBasedAdapter implements BookSourceAdapter {
     /* ======================== search ======================== */
 
     async search(keyword: string, page = 0): Promise<BookSearchItem[]> {
+        // 提取搜索规则
         const { search: rule } = this.rule
 
+        // 检查搜索冷却时间
         if (rule.cooldown) {
             const remain = rule.cooldown - (Date.now() - this.lastSearchAt)
             if (remain > 0) {
@@ -58,19 +56,21 @@ export class RuleBasedAdapter implements BookSourceAdapter {
                     return this.lastSearchResults
                 }
                 throw new Error(
-                    `${this.sourceName}搜索频率受限，请在 ${Math.ceil(remain / 1000)} 秒后重试`
+                    `${this.sourceName}搜索频率受限，请在 ${Math.ceil(
+                        remain / 1000
+                    )} 秒后重试`
                 )
             }
         }
 
         const vars = {
+            // encodeURIComponent - 对关键词进行 URL 编码
             keyword: encodeURIComponent(keyword),
             page: String(page),
         }
+
         const url = this.buildUrl(rule.url, vars)
-        const body = rule.body
-            ? this.interpolate(rule.body, vars)
-            : undefined
+        const body = rule.body ? this.interpolate(rule.body, vars) : undefined
 
         const data = await this.fetch(url, rule.method, body, rule.contentType)
 
@@ -92,6 +92,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
                 bookId: item.bookId,
                 name: item.name,
                 author: item.author,
+                cover: item.cover,
                 intro: item.intro,
                 latestChapter: item.latestChapter,
                 wordCount: item.wordCount,
@@ -123,6 +124,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             bookId,
             name: fields.name ?? '',
             author: fields.author ?? '',
+            cover: fields.cover,
             intro: fields.intro,
             latestChapter: fields.latestChapter,
             wordCount: fields.wordCount,
@@ -160,11 +162,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
             const $ = cheerio.load(data as string)
             $(rule.list).each((_, el) => {
-                const item = this.extractFieldsFromEl(
-                    $,
-                    $(el),
-                    rule.fields
-                )
+                const item = this.extractFieldsFromEl($, $(el), rule.fields)
                 if (!item.chapterId || !item.title) return
                 allChapters.push({
                     chapterId: item.chapterId,
@@ -221,33 +219,46 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
     /* ======================== internal: url & http ======================== */
 
+    /**
+     * 用于判断当前规则是否以 JSON 作为数据源，影响后续请求头和解析逻辑。
+     */
     private isJson(): boolean {
         return this.rule.sourceType === 'json'
     }
 
+    /**
+     * 用于将模板中的 {{key}} 占位符替换成实际变量值，生成可请求的字符串。
+     */
     private interpolate(
         template: string,
         vars: Record<string, string>
     ): string {
-        return template.replace(
-            /\{\{(\w+)\}\}/g,
-            (_, key) => vars[key] ?? ''
-        )
+        return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
     }
 
+    /**
+     * 用于基于模板和变量构建最终请求 URL，并将相对地址补全为绝对地址。
+     */
     private buildUrl(
         template: string,
         vars: Record<string, string> = {}
     ): string {
         const allVars = { baseUrl: this.rule.sourceUrl, ...vars }
         const url = this.interpolate(template, allVars)
+
+        // 如果 URL 已经是绝对地址，则直接返回
         if (url.startsWith('http://') || url.startsWith('https://')) {
             return url
         }
+
+        // 将相对地址补全为绝对地址
         const base = this.rule.sourceUrl.replace(/\/$/, '')
         return `${base}${url.startsWith('/') ? '' : '/'}${url}`
     }
 
+    /**
+     * 用于把抓取到的 href 统一解析为绝对 URL，便于后续稳定发起请求。
+     */
     private resolveHref(href: string): string {
         if (href.startsWith('http://') || href.startsWith('https://')) {
             return href
@@ -256,6 +267,9 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         return `${base}${href.startsWith('/') ? '' : '/'}${href}`
     }
 
+    /**
+     * 用于发起 HTTP 请求，并根据书源类型选择响应类型和请求头。
+     */
     private async fetch(
         url: string,
         method: 'GET' | 'POST' = 'GET',
@@ -288,10 +302,13 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         listSelector: string,
         fields: Record<string, FieldRule | undefined>
     ): Record<string, string>[] {
+        // 把 html 字符串交给 cheerio 解析成一个可查询的 DOM 结构
         const $ = cheerio.load(html)
         const results: Record<string, string>[] = []
 
+        // 用选择器 listSelector 找到所有匹配元素，然后逐个遍历
         $(listSelector).each((_, el) => {
+            // 这里的 el 就是列表项元素，$(el) 就是列表项元素的 cheerio 对象
             results.push(this.extractFieldsFromEl($, $(el), fields))
         })
         return results
@@ -305,6 +322,9 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         return this.extractFieldsFromEl($, $.root(), fields)
     }
 
+    /**
+     * 字段提取
+     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private extractFieldsFromEl(
         $: cheerio.CheerioAPI,
@@ -347,10 +367,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
     /* ======================== internal: content purify ======================== */
 
-    private purifyText(
-        raw: string,
-        options?: ContentPurifyOptions
-    ): string {
+    private purifyText(raw: string, options?: ContentPurifyOptions): string {
         if (!options) return raw
 
         let text = raw
