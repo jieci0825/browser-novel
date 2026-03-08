@@ -3,24 +3,53 @@ import type { DefaultContext } from 'koa'
 import { adapterManager } from '../adapter'
 import { ValidationException } from '../exception/app-exception'
 
-const router = new Router<any, DefaultContext>({ prefix: '/api' })
+const router = new Router<any, DefaultContext>({ prefix: '/api/books' })
 
 /** 获取可用书源列表 */
 router.get('/sources', ctx => {
     ctx.success(adapterManager.listSources())
 })
 
-/** 搜索（聚合所有书源） */
+/** 搜索（聚合所有书源，NDJSON 流式返回） */
 router.get('/search', async ctx => {
+    console.log('search', ctx.query)
     const keyword = (ctx.query.keyword as string) || ''
-    const page = Number(ctx.query.page) || 0
 
     if (!keyword.trim()) {
         throw new ValidationException('请输入搜索关键词')
     }
 
-    const data = await adapterManager.searchAll(keyword, page)
-    ctx.success(data)
+    ctx.set({
+        'Content-Type': 'application/x-ndjson',
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no',
+    })
+
+    ctx.status = 200
+    // 表示不使用 Koa 的响应处理，而是自己手动处理响应
+    ctx.respond = false
+
+    const res = ctx.res
+    res.flushHeaders()
+
+    // 写入一行数据
+    const writeLine = (data: unknown) => {
+        if (!res.writableEnded) {
+            res.write(JSON.stringify(data) + '\n')
+        }
+    }
+
+    await adapterManager.searchAllStream(keyword, {
+        onResult(sourceId, sourceName, items) {
+            writeLine({ type: 'result', sourceId, sourceName, items })
+        },
+        onError(sourceId, sourceName, message) {
+            writeLine({ type: 'error', sourceId, sourceName, message })
+        },
+    })
+
+    writeLine({ type: 'done' })
+    res.end()
 })
 
 /** 搜索指定书源 */
@@ -39,7 +68,7 @@ router.get('/search/:sourceId', async ctx => {
 })
 
 /** 书籍详情 */
-router.get('/book/:sourceId', async ctx => {
+router.get('/:sourceId/detail', async ctx => {
     const { sourceId } = ctx.params
     const bookId = ctx.query.bookId as string
 
@@ -53,7 +82,7 @@ router.get('/book/:sourceId', async ctx => {
 })
 
 /** 章节目录 */
-router.get('/chapters/:sourceId', async ctx => {
+router.get('/:sourceId/chapters', async ctx => {
     const { sourceId } = ctx.params
     const bookId = ctx.query.bookId as string
 
@@ -67,7 +96,7 @@ router.get('/chapters/:sourceId', async ctx => {
 })
 
 /** 章节正文 */
-router.get('/content/:sourceId', async ctx => {
+router.get('/:sourceId/content', async ctx => {
     const { sourceId } = ctx.params
     const bookId = ctx.query.bookId as string
     const chapterId = ctx.query.chapterId as string

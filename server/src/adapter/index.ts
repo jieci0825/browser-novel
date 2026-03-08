@@ -13,6 +13,7 @@ for (const adapter of adapters) {
 }
 
 export { adapterManager }
+export type { SearchStreamCallbacks } from './manager'
 export type {
     BookSearchItem,
     BookDetail,

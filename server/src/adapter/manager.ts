@@ -1,6 +1,11 @@
 import type { BookSourceAdapter, BookSearchItem } from './types'
 import { SourceNotFoundException } from '../exception/app-exception'
 
+export interface SearchStreamCallbacks {
+    onResult(sourceId: string, sourceName: string, items: BookSearchItem[]): void
+    onError?(sourceId: string, sourceName: string, message: string): void
+}
+
 /**
  * 适配器管理器
  */
@@ -27,13 +32,18 @@ class AdapterManager {
         }))
     }
 
-    /** 聚合搜索所有书源 */
-    async searchAll(keyword: string, page?: number): Promise<BookSearchItem[]> {
-        const tasks = [...this.adapters.values()].map(adapter =>
-            adapter.search(keyword, page).catch(() => [] as BookSearchItem[])
-        )
-        const results = await Promise.all(tasks)
-        return results.flat()
+    /** 流式聚合搜索：每个书源完成后立即通过回调推送结果 */
+    async searchAllStream(keyword: string, callbacks: SearchStreamCallbacks): Promise<void> {
+        const tasks = [...this.adapters.values()].map(async adapter => {
+            try {
+                const items = await adapter.search(keyword)
+                callbacks.onResult(adapter.sourceId, adapter.sourceName, items)
+            } catch (error) {
+                const message = error instanceof Error ? error.message : '书源请求失败'
+                callbacks.onError?.(adapter.sourceId, adapter.sourceName, message)
+            }
+        })
+        await Promise.all(tasks)
     }
 }
 

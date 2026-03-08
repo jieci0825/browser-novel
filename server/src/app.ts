@@ -7,7 +7,7 @@ import { responseMiddleware } from './middleware/response'
 import { exceptionMiddleware } from './middleware/exception'
 
 const app = new Koa()
-const PORT = Number(process.env.PORT) || 3001
+const PORT = Number(process.env.PORT) || 5100
 
 app.use(cors())
 app.use(requestContextMiddleware)
