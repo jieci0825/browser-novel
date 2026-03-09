@@ -21,7 +21,8 @@ const Q_GUID = '4aa27c7cf2d9aca3359656ea186488cb'
 
 function buildCoverUrl(bid: string): string {
     const tail = parseInt(bid.slice(-3))
-    const n = tail < 10 ? bid.slice(-1) : tail < 100 ? bid.slice(-2) : bid.slice(-3)
+    const n =
+        tail < 10 ? bid.slice(-1) : tail < 100 ? bid.slice(-2) : bid.slice(-3)
     return `http://wfqqreader-1252317822.image.myqcloud.com/cover/${n}/${bid}/b_${bid}.jpg`
 }
 
@@ -70,12 +71,14 @@ export class QQReaderAdapter implements BookSourceAdapter {
         const info = data?.data?.bookInfo
         if (!info) throw new Error('获取书籍详情失败')
 
+        console.log('书籍详情 =', info)
+
         return {
             sourceId: this.sourceId,
             bookId: info.resourceID,
             name: info.resourceName,
             author: info.author,
-            cover: info.cover || info.coverUrl || info.picUrl,
+            cover: info.picurl,
             intro: info.summary,
             latestChapter: info.lastSerialname,
             wordCount: String(info.contentsize),
