@@ -264,6 +264,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         template: string,
         vars: Record<string, string> = {}
     ): string {
+        // 合并所有的变量
         const allVars = { baseUrl: this.rule.sourceUrl, ...vars }
         const url = this.interpolate(template, allVars)
 

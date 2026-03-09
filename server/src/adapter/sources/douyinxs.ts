@@ -53,7 +53,7 @@ export const douyinxsRule: BookSourceRule = {
         url: '{{baseUrl}}/bqg/{{bookId}}',
         list: '#list dt:last-of-type ~ dd a',
         fields: {
-            chapterId: '@href',
+            chapterId: '@href | regex:(\\d+)\\.html$',
             title: '@text',
         },
         pagination: {
@@ -63,7 +63,7 @@ export const douyinxsRule: BookSourceRule = {
 
     // 正文规则
     content: {
-        url: '{{baseUrl}}/bqg/{{chapterId}}.html',
+        url: '{{baseUrl}}/bqg/{{bookId}}/{{chapterId}}.html',
         fields: {
             title: '.bookname h1 || h1 || title',
             content: '#content@html',
