@@ -1,17 +1,35 @@
+import type * as cheerio from 'cheerio'
+
 /**
- * 字段提取规则 DSL 字符串
+ * 字段提取规则
  *
- * 语法：
- *   selector                      → 取 text
- *   selector@attr                 → 取属性值 (href / html / text / ...)
- *   selector | replace:pattern,replacement  → 正则替换
- *   selector | regex:pattern      → 正则提取 (返回第一个捕获组)
- *   selectorA || selectorB        → 回退：依次尝试，返回第一个非空值
+ * 支持两种形式：
+ * 1. DSL 字符串 — 声明式提取
+ *    selector                      → 取 text
+ *    selector@attr                 → 取属性值 (href / html / text / ...)
+ *    selector | replace:pattern,replacement  → 正则替换
+ *    selector | regex:pattern      → 正则提取 (返回第一个捕获组)
+ *    selectorA || selectorB        → 回退：依次尝试，返回第一个非空值
+ *    列表上下文中：@text / @href / @html → 引用当前迭代元素自身
  *
- * 列表上下文中：
- *   @text / @href / @html         → 引用当前迭代元素自身
+ * 2. 脚本函数 — 当声明式不够灵活时，直接编写提取逻辑
  */
-export type FieldRule = string
+export type FieldRule = string | FieldRuleFn
+
+export type FieldRuleFn = (context: FieldRuleContext) => string
+
+/** 脚本函数接收的上下文，根据 sourceType 不同，可用字段不同 */
+export interface FieldRuleContext {
+    /** HTML 模式：cheerio 实例，可用于任意 DOM 查询 */
+    $?: cheerio.CheerioAPI
+    /** HTML 模式：当前上下文元素（列表项 or 页面根节点） */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    el?: cheerio.Cheerio<any>
+    /** JSON 模式：当前上下文数据（列表项 or 整个响应体） */
+    data?: unknown
+    /** 书源根 URL，方便拼接地址 */
+    sourceUrl: string
+}
 
 /** 书源规则 */
 export interface BookSourceRule {

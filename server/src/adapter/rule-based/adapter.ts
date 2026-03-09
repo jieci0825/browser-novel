@@ -7,7 +7,12 @@ import type {
     Chapter,
     ChapterContent,
 } from '../types'
-import type { BookSourceRule, ContentPurifyOptions, FieldRule } from './types'
+import type {
+    BookSourceRule,
+    ContentPurifyOptions,
+    FieldRule,
+    FieldRuleContext,
+} from './types'
 import { extractHtmlField, extractJsonField, getByPath } from './field-parser'
 import { isArray } from '../../utils/check-type'
 
@@ -210,8 +215,19 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         }
 
         const root = $.root()
-        const title = extractHtmlField($, root, rule.fields.title)
-        const rawContent = extractHtmlField($, root, rule.fields.content)
+        const fnCtx: FieldRuleContext = {
+            $,
+            el: root,
+            sourceUrl: this.rule.sourceUrl,
+        }
+        const title =
+            typeof rule.fields.title === 'function'
+                ? rule.fields.title(fnCtx)
+                : extractHtmlField($, root, rule.fields.title)
+        const rawContent =
+            typeof rule.fields.content === 'function'
+                ? rule.fields.content(fnCtx)
+                : extractHtmlField($, root, rule.fields.content)
         const content = this.purifyText(rawContent, rule.purify)
 
         return { title, content }
@@ -303,6 +319,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         fields: Record<string, FieldRule | undefined>
     ): Record<string, string>[] {
         // 把 html 字符串交给 cheerio 解析成一个可查询的 DOM 结构
+        //  - 此时的 $ 就类似浏览器中的 document，或者说 jQuery 中的 $
         const $ = cheerio.load(html)
         const results: Record<string, string>[] = []
 
@@ -322,9 +339,6 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         return this.extractFieldsFromEl($, $.root(), fields)
     }
 
-    /**
-     * 字段提取
-     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private extractFieldsFromEl(
         $: cheerio.CheerioAPI,
@@ -332,10 +346,17 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         fields: Record<string, FieldRule | undefined>
     ): Record<string, string> {
         const result: Record<string, string> = {}
+        const fnCtx: FieldRuleContext = {
+            $,
+            el,
+            sourceUrl: this.rule.sourceUrl,
+        }
         for (const [key, rule] of Object.entries(fields)) {
-            if (rule) {
-                result[key] = extractHtmlField($, el, rule)
-            }
+            if (!rule) continue
+            result[key] =
+                typeof rule === 'function'
+                    ? rule(fnCtx)
+                    : extractHtmlField($, el, rule)
         }
         return result
     }
@@ -357,10 +378,16 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         fields: Record<string, FieldRule | undefined>
     ): Record<string, string> {
         const result: Record<string, string> = {}
+        const fnCtx: FieldRuleContext = {
+            data,
+            sourceUrl: this.rule.sourceUrl,
+        }
         for (const [key, rule] of Object.entries(fields)) {
-            if (rule) {
-                result[key] = extractJsonField(data, rule)
-            }
+            if (!rule) continue
+            result[key] =
+                typeof rule === 'function'
+                    ? rule(fnCtx)
+                    : extractJsonField(data, rule)
         }
         return result
     }

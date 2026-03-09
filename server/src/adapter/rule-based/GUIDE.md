@@ -15,6 +15,7 @@
   - [回退 ||](#4-回退-)
   - [列表上下文中的自引用](#5-列表上下文中的自引用)
   - [组合使用](#6-组合使用)
+  - [脚本函数](#脚本函数)
 - [URL 模板变量](#url-模板变量)
 - [规则各部分详解](#规则各部分详解)
   - [基础信息与 HTTP 配置](#基础信息与-http-配置)
@@ -84,7 +85,16 @@ BookSourceRule
 
 ## FieldRule 字段提取语法
 
-`FieldRule` 是一个字符串，用来声明"从页面中提取什么数据"。它是整套系统的核心。
+`FieldRule` 支持两种形式：
+
+1. **DSL 字符串**（声明式） — 适用于大多数简单到中等复杂度的字段提取
+2. **脚本函数**（编程式） — 当声明式不够灵活时，直接编写提取逻辑
+
+两种形式可以在同一个规则对象中**自由混用**，按字段粒度选择最合适的方式。
+
+### DSL 字符串
+
+DSL 字符串用来声明"从页面中提取什么数据"。它是整套系统的核心。
 
 完整语法结构：
 
@@ -312,6 +322,102 @@ a.cover@href | replace:^//,https://
 // 完整组合：回退 + 属性 + 多级管道
 meta[name=description]@content | replace:简介：, | regex:^(.{200}) || #intro
 ```
+
+### 脚本函数
+
+当 DSL 字符串无法覆盖某些复杂提取逻辑时，可以将 `FieldRule` 写成一个函数。函数接收一个 `FieldRuleContext` 上下文对象，返回提取到的字符串。
+
+#### 函数签名
+
+```typescript
+type FieldRuleFn = (context: FieldRuleContext) => string
+
+interface FieldRuleContext {
+    $?: CheerioAPI           // HTML 模式：cheerio 实例
+    el?: Cheerio<any>        // HTML 模式：当前上下文元素
+    data?: unknown           // JSON 模式：当前上下文数据
+    sourceUrl: string        // 书源根 URL
+}
+```
+
+- **HTML 模式**：`$` 和 `el` 可用。`el` 在列表遍历时为当前项元素，在页面级提取时为根节点
+- **JSON 模式**：`data` 可用。在列表遍历时为当前项对象，在页面级提取时为整个响应体
+- `sourceUrl` 始终可用，方便拼接地址
+
+#### 使用示例
+
+**HTML 模式 — 列表项中需要拼接多个元素的文本：**
+
+```typescript
+search: {
+    list: '.result-list li',
+    fields: {
+        name: '.title a',                       // DSL：简单场景
+        bookId: '.title a@href',                 // DSL
+        author: ({ el }) => {                    // 函数：需要复杂提取
+            const text = el!.find('.info').text()
+            const match = text.match(/作者[：:]\s*(.+?)(?:\s|$)/)
+            return match?.[1] ?? ''
+        },
+    },
+}
+```
+
+**JSON 模式 — 需要条件判断或多字段组合：**
+
+```typescript
+detail: {
+    url: '/book/{{bookId}}',
+    fields: {
+        name: '$.data.title',                    // DSL
+        author: '$.data.author',                 // DSL
+        status: ({ data }) => {                  // 函数：枚举值映射
+            const s = (data as any).data?.status
+            const map: Record<number, string> = { 1: '连载', 2: '完结', 3: '暂停' }
+            return map[s] ?? '未知'
+        },
+        category: ({ data }) => {                // 函数：数组拼接
+            const tags = (data as any).data?.tags
+            return Array.isArray(tags) ? tags.join(' · ') : ''
+        },
+    },
+}
+```
+
+**混合使用 — 同一规则中 DSL 与函数并存：**
+
+```typescript
+content: {
+    url: '{{baseUrl}}{{chapterId}}',
+    fields: {
+        title: '.bookname h1 || h1 || title',    // DSL
+        content: ({ $, el }) => {                 // 函数：复杂内容清洗
+            const paragraphs: string[] = []
+            el!.find('#content p').each((_, p) => {
+                const text = $(p).text().trim()
+                if (text && !text.includes('广告')) {
+                    paragraphs.push(text)
+                }
+            })
+            return paragraphs.join('\n')
+        },
+    },
+}
+```
+
+#### 何时使用脚本函数
+
+| 场景 | 推荐方式 |
+|------|----------|
+| 简单的选择器 + 属性提取 | DSL 字符串 |
+| 选择器 + 正则替换/提取 | DSL 字符串 |
+| 多分支回退 | DSL 字符串 |
+| 需要条件判断（if/switch/map） | 脚本函数 |
+| 需要组合多个元素的值 | 脚本函数 |
+| JSON 枚举值映射 | 脚本函数（或 DSL 多级 replace） |
+| 复杂字符串处理（split/join/slice） | 脚本函数 |
+
+> **原则**：优先使用 DSL 字符串保持规则的简洁性，仅在 DSL 确实不够用时才使用脚本函数。
 
 ---
 

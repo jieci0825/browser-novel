@@ -1,5 +1,6 @@
 import type * as cheerio from 'cheerio'
-import type { FieldRule } from './types'
+/** DSL 字符串形式的字段规则（函数形式由 adapter 层处理，不会进入 parser） */
+type FieldRuleDSL = string
 
 interface PipeOp {
     type: 'regex' | 'replace'
@@ -107,7 +108,7 @@ function extractValue(el: cheerio.Cheerio<any>, extract: string): string {
 export function extractHtmlField(
     $: cheerio.CheerioAPI,
     context: cheerio.Cheerio<any>,
-    rule: FieldRule
+    rule: FieldRuleDSL
 ): string {
     if (!rule) return ''
 
@@ -162,7 +163,7 @@ export function getByPath(obj: unknown, path: string): unknown {
 /**
  * 从 JSON 数据中提取字段值
  */
-export function extractJsonField(data: unknown, rule: FieldRule): string {
+export function extractJsonField(data: unknown, rule: FieldRuleDSL): string {
     if (!rule) return ''
 
     const branches = rule.split(' || ')
