@@ -14,7 +14,7 @@ import type {
     FieldRuleContext,
 } from './types'
 import { extractHtmlField, extractJsonField, getByPath } from './field-parser'
-import { isArray } from '../../utils/check-type'
+import { isArray, isFunction } from '../../utils/check-type'
 
 // 默认用户代理
 const DEFAULT_UA =
@@ -49,7 +49,11 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
     /* ======================== search ======================== */
 
-    async search(keyword: string, page = 0): Promise<BookSearchItem[]> {
+    async search(
+        keyword: string,
+        page = 0,
+        pageSize?: number
+    ): Promise<BookSearchItem[]> {
         // 提取搜索规则
         const { search: rule } = this.rule
 
@@ -72,6 +76,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             // encodeURIComponent - 对关键词进行 URL 编码
             keyword: encodeURIComponent(keyword),
             page: String(page),
+            pageSize: String(pageSize ?? ''),
         }
 
         const url = this.buildUrl(rule.url, vars)
@@ -353,10 +358,9 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         }
         for (const [key, rule] of Object.entries(fields)) {
             if (!rule) continue
-            result[key] =
-                typeof rule === 'function'
-                    ? rule(fnCtx)
-                    : extractHtmlField($, el, rule)
+            result[key] = isFunction(rule)
+                ? rule(fnCtx)
+                : extractHtmlField($, el, rule)
         }
         return result
     }
@@ -384,10 +388,9 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         }
         for (const [key, rule] of Object.entries(fields)) {
             if (!rule) continue
-            result[key] =
-                typeof rule === 'function'
-                    ? rule(fnCtx)
-                    : extractJsonField(data, rule)
+            result[key] = isFunction(rule)
+                ? rule(fnCtx)
+                : extractJsonField(data, rule)
         }
         return result
     }

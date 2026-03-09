@@ -56,13 +56,22 @@ router.get('/search/:sourceId', async ctx => {
     const { sourceId } = ctx.params
     const keyword = (ctx.query.keyword as string) || ''
     const page = Number(ctx.query.page) || 0
+    const pageSizeRaw = ctx.query.pageSize as string | undefined
+    const pageSize =
+        pageSizeRaw === undefined ? undefined : Number(pageSizeRaw)
 
     if (!keyword.trim()) {
         throw new ValidationException('请输入搜索关键词')
     }
+    if (
+        pageSizeRaw !== undefined &&
+        (!Number.isInteger(pageSize) || (pageSize as number) <= 0)
+    ) {
+        throw new ValidationException('pageSize 必须是大于 0 的整数')
+    }
 
     const adapter = adapterManager.get(sourceId)
-    const data = await adapter.search(keyword, page)
+    const data = await adapter.search(keyword, page, pageSize)
     ctx.success(data)
 })
 

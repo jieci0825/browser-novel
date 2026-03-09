@@ -23,10 +23,15 @@ export class QQReaderAdapter implements BookSourceAdapter {
     readonly sourceId = 'qq-reader'
     readonly sourceName = 'QQ阅读'
 
-    async search(keyword: string, page = 0): Promise<BookSearchItem[]> {
-        const pageSize = 20
-        const start = page * pageSize
-        const end = start + pageSize - 1
+    async search(
+        keyword: string,
+        page = 0,
+        pageSize = 20
+    ): Promise<BookSearchItem[]> {
+        const safePageSize =
+            Number.isInteger(pageSize) && pageSize > 0 ? pageSize : 20
+        const start = page * safePageSize
+        const end = start + safePageSize - 1
 
         const { data } = await http.get(
             'https://newopensearch.reader.qq.com/wechat',

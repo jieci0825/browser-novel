@@ -430,6 +430,7 @@ content: {
 | `{{baseUrl}}` | 书源的 `sourceUrl` 值 | 所有 `url` 字段 |
 | `{{keyword}}` | 搜索关键词（已自动 `encodeURIComponent`） | `search.url`、`search.body` |
 | `{{page}}` | 页码（从 0 开始） | `search.url`、`search.body` |
+| `{{pageSize}}` | 每页条数（可选，需由调用方传入） | `search.url`、`search.body` |
 | `{{bookId}}` | 书籍标识符 | `detail.url`、`chapters.url`、`content.url` |
 | `{{chapterId}}` | 章节标识符 | `content.url` |
 

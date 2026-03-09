@@ -44,7 +44,11 @@ export interface BookSourceAdapter {
     readonly sourceName: string
 
     /** 搜索书籍 */
-    search(keyword: string, page?: number): Promise<BookSearchItem[]>
+    search(
+        keyword: string,
+        page?: number,
+        pageSize?: number
+    ): Promise<BookSearchItem[]>
 
     /** 获取书籍详情 */
     getDetail(bookId: string): Promise<BookDetail>
