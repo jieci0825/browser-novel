@@ -71,8 +71,6 @@ export class QQReaderAdapter implements BookSourceAdapter {
         const info = data?.data?.bookInfo
         if (!info) throw new Error('获取书籍详情失败')
 
-        console.log('书籍详情 =', info)
-
         return {
             sourceId: this.sourceId,
             bookId: info.resourceID,
