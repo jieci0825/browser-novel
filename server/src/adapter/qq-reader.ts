@@ -19,6 +19,12 @@ const REFERER =
     'https://bookshelf.html5.qq.com/qbread/categorylist?traceid=0809004&sceneid=FeedsTab'
 const Q_GUID = '4aa27c7cf2d9aca3359656ea186488cb'
 
+function buildCoverUrl(bid: string): string {
+    const tail = parseInt(bid.slice(-3))
+    const n = tail < 10 ? bid.slice(-1) : tail < 100 ? bid.slice(-2) : bid.slice(-3)
+    return `http://wfqqreader-1252317822.image.myqcloud.com/cover/${n}/${bid}/b_${bid}.jpg`
+}
+
 export class QQReaderAdapter implements BookSourceAdapter {
     readonly sourceId = 'qq-reader'
     readonly sourceName = 'QQ阅读'
@@ -42,10 +48,10 @@ export class QQReaderAdapter implements BookSourceAdapter {
 
         return data.booklist.map((item: any) => ({
             sourceId: this.sourceId,
-            bookId: item.bid,
+            bookId: String(1100000000 + parseInt(item.bid)),
             name: item.title,
             author: item.author,
-            cover: item.cover || item.coverUrl || item.picUrl,
+            cover: buildCoverUrl(item.bid),
             intro: item.intro,
             wordCount: item.totalWords,
             status: item.updateInfo,

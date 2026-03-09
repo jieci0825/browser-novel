@@ -35,7 +35,7 @@ export const douyinxsRule: BookSourceRule = {
 
     // 详情规则
     detail: {
-        url: '{{baseUrl}}{{bookId}}',
+        url: '{{baseUrl}}/bqg/{{bookId}}',
         fields: {
             name: '#info h1',
             author: '#info p:nth-of-type(1) | replace:^作\\s*者[：:]\\s*,',
@@ -50,17 +50,20 @@ export const douyinxsRule: BookSourceRule = {
 
     // 章节列表规则
     chapters: {
-        url: '{{baseUrl}}{{bookId}}',
-        list: '#list dd a',
+        url: '{{baseUrl}}/bqg/{{bookId}}',
+        list: '#list dt:last-of-type ~ dd a',
         fields: {
             chapterId: '@href',
             title: '@text',
+        },
+        pagination: {
+            nextSelector: '.index-container a:contains("下一页")',
         },
     },
 
     // 正文规则
     content: {
-        url: '{{baseUrl}}{{chapterId}}',
+        url: '{{baseUrl}}/bqg/{{chapterId}}.html',
         fields: {
             title: '.bookname h1 || h1 || title',
             content: '#content@html',

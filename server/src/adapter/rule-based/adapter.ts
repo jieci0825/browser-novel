@@ -151,38 +151,38 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         let url: string | null = this.buildUrl(rule.url, vars)
 
         const allChapters: Chapter[] = []
+        const seenIds = new Set<string>()
+        const visitedUrls = new Set<string>()
         const maxPages = rule.pagination?.maxPages ?? 50
         let pageCount = 0
 
         while (url && pageCount < maxPages) {
+            if (visitedUrls.has(url)) break
+            visitedUrls.add(url)
+
             const data = await this.fetch(url, rule.method)
 
-            if (this.isJson()) {
-                const items = this.mapJsonList(data, rule.list, rule.fields)
-                for (const item of items) {
-                    if (!item.chapterId || !item.title) continue
-                    allChapters.push({
-                        chapterId: item.chapterId,
-                        title: item.title,
-                        index: allChapters.length,
-                    })
-                }
-                break
-            }
+            const items = this.isJson()
+                ? this.mapJsonList(data, rule.list, rule.fields)
+                : this.mapHtmlList(data as string, rule.list, rule.fields)
 
-            const $ = cheerio.load(data as string)
-            $(rule.list).each((_, el) => {
-                const item = this.extractFieldsFromEl($, $(el), rule.fields)
-                if (!item.chapterId || !item.title) return
+            let newCount = 0
+            for (const item of items) {
+                if (!item.chapterId || !item.title) continue
+                if (seenIds.has(item.chapterId)) continue
+                seenIds.add(item.chapterId)
                 allChapters.push({
                     chapterId: item.chapterId,
                     title: item.title,
                     index: allChapters.length,
                 })
-            })
+                newCount++
+            }
 
-            if (!rule.pagination?.nextSelector) break
+            if (this.isJson() || !rule.pagination?.nextSelector) break
+            if (pageCount > 0 && newCount === 0) break
 
+            const $ = cheerio.load(data as string)
             const nextHref = $(rule.pagination.nextSelector).attr('href')
             if (!nextHref) break
 
