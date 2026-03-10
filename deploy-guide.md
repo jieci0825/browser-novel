@@ -16,19 +16,45 @@
 ### 缓存层级
 
 ```
-浏览器请求 → Koa 服务 → SQLite 缓存层 → (cache miss) → 外部书源
-                              ↓
-                        (cache hit) → 直接返回
+浏览器请求 → Koa 服务 → 缓存切面 → (cache miss) → 外部书源
+                            ↓
+                      (cache hit) → 直接返回
 ```
+
+### 设计原则
+
+- **无 TTL，永久持久化**：缓存数据不会自动过期
+- **用户驱动刷新**：前端提供刷新按钮，请求携带 `?refresh=true` 时跳过缓存、重新请求书源并更新缓存
+- **搜索不缓存**：搜索结果始终实时请求，同时作为书源可用性的检测手段
+- **刷新失败保留旧数据**：刷新请求如果书源异常，旧缓存不会被清除
 
 ### 各接口缓存策略
 
-| 接口 | 缓存 Key 格式 | TTL | 说明 |
-|------|--------------|-----|------|
-| 章节正文 | `content:{sourceId}:{bookId}:{chapterId}` | 长期（天级别） | 内容几乎不变 |
-| 章节目录 | `chapters:{sourceId}:{bookId}` | 中等（10-30 分钟） | 仅新章节时变化 |
-| 书籍详情 | `detail:{sourceId}:{bookId}` | 中等（30-60 分钟） | 变化频率低 |
-| 搜索结果 | `search:{sourceId}:{keyword}:{page}` | 短（3-5 分钟） | 变化频率中等 |
+| 接口 | 缓存 Key 格式 | 缓存 | 说明 |
+|------|--------------|------|------|
+| 章节正文 | `content:{sourceId}:{bookId}:{chapterId}` | 持久化 | 内容几乎不变 |
+| 章节目录 | `chapters:{sourceId}:{bookId}` | 持久化 | 用户按需刷新 |
+| 书籍详情 | `detail:{sourceId}:{bookId}` | 持久化 | 用户按需刷新 |
+| 搜索结果 | — | 不缓存 | 实时请求，兼做书源可用性检测 |
+
+### 切面架构
+
+```
+异常切面 (超时 + 异常映射)
+  └─ 缓存切面 (SQLite 持久化)
+       └─ 适配器 (QQReader / RuleBased)
+```
+
+通过 `withAdapterCacheAspect` 以 Proxy 模式包裹适配器，与已有的 `withAdapterExceptionAspect` 组合使用，对路由层零侵入。
+
+### 刷新信号传递
+
+```
+前端 ?refresh=true → requestContextMiddleware (AsyncLocalStorage)
+                         → 缓存切面读取 forceRefresh 标记
+                             → true:  跳过缓存读取，请求书源，更新缓存
+                             → false: 查缓存，命中则直接返回
+```
 
 ### 表结构
 
@@ -36,19 +62,8 @@
 CREATE TABLE IF NOT EXISTS cache (
     key        TEXT PRIMARY KEY,
     value      TEXT NOT NULL,
-    ttl        INTEGER NOT NULL,
-    created_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL
 );
-
-CREATE INDEX IF NOT EXISTS idx_cache_ttl ON cache(ttl);
-```
-
-### 基本用法
-
-```typescript
-import { DatabaseSync } from 'node:sqlite'
-
-const db = new DatabaseSync('/app/data/cache.db')
 ```
 
 > `node:sqlite` 目前标记为 Experimental，运行时会输出警告，可通过 `NODE_NO_WARNINGS=1` 抑制。
