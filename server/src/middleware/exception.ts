@@ -2,6 +2,7 @@ import type { Middleware } from 'koa'
 import { AppException } from '../exception/app-exception'
 import { ErrorCode } from '../exception/error-code'
 import { getTraceId } from '../utils/response'
+import { exceptionLogger } from '../utils/logger'
 
 export const exceptionMiddleware: Middleware = async (ctx, next) => {
     try {
@@ -29,9 +30,9 @@ export const exceptionMiddleware: Middleware = async (ctx, next) => {
         }
 
         if (isKnownException) {
-            console.warn('[EXCEPTION]', logPayload)
+            exceptionLogger.warn('%j', logPayload)
         } else {
-            console.error('[EXCEPTION]', logPayload, error)
+            exceptionLogger.error('%j %s', logPayload, error)
         }
 
         ctx.status = appException.httpStatus

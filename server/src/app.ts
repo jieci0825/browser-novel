@@ -9,6 +9,7 @@ import { loggerMiddleware } from './middleware/logger'
 import { createRateLimitMiddleware } from './middleware/rate-limit'
 import { responseMiddleware } from './middleware/response'
 import { exceptionMiddleware } from './middleware/exception'
+import { logger, shutdownLogger } from './utils/logger'
 
 const app = new Koa()
 const PORT = Number(process.env.PORT) || 5100
@@ -25,14 +26,15 @@ app.use(bookRouter.routes())
 app.use(bookRouter.allowedMethods())
 
 const server = app.listen(PORT, () => {
-    console.log(`服务已启动: http://localhost:${PORT}`)
+    logger.info(`服务已启动: http://localhost:${PORT}`)
 })
 
 const shutdown = async () => {
-    console.log('正在关闭服务...')
+    logger.info('正在关闭服务...')
     cacheService.close()
     await browserPool.close()
     server.close()
+    await shutdownLogger()
     process.exit(0)
 }
 

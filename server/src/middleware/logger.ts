@@ -1,5 +1,6 @@
 import type { Middleware } from 'koa'
 import { getClientIp } from '../utils/client-ip'
+import { accessLogger } from '../utils/logger'
 
 export const loggerMiddleware: Middleware = async (ctx, next) => {
     const start = performance.now()
@@ -12,7 +13,7 @@ export const loggerMiddleware: Middleware = async (ctx, next) => {
     const traceId = ctx.state.traceId ?? '-'
     const contentLength = ctx.response.length ?? 0
 
-    console.log(
-        `[${new Date().toISOString()}] ${ip} ${method} ${url} ${status} ${contentLength}b ${duration}ms | traceId=${traceId}`
+    accessLogger.info(
+        `${ip} ${method} ${url} ${status} ${contentLength}b ${duration}ms | traceId=${traceId}`
     )
 }
