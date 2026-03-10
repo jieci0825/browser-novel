@@ -2,6 +2,7 @@ import Koa from 'koa'
 import cors from '@koa/cors'
 import bookRouter from './routes/book'
 import { browserPool } from './browser/pool'
+import { cacheService } from './cache/cache-service'
 import { requestContextMiddleware } from './middleware/request-context'
 import { responseMiddleware } from './middleware/response'
 import { exceptionMiddleware } from './middleware/exception'
@@ -23,6 +24,7 @@ const server = app.listen(PORT, () => {
 
 const shutdown = async () => {
     console.log('正在关闭服务...')
+    cacheService.close()
     await browserPool.close()
     server.close()
     process.exit(0)
