@@ -1,10 +1,5 @@
 import type { Middleware } from 'koa'
-
-function getClientIp(ctx: Parameters<Middleware>[0]): string {
-    const forwarded = ctx.get('x-forwarded-for')
-    if (forwarded) return forwarded.split(',')[0].trim()
-    return ctx.ip || '-'
-}
+import { getClientIp } from '../utils/client-ip'
 
 export const loggerMiddleware: Middleware = async (ctx, next) => {
     const start = performance.now()
