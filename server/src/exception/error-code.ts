@@ -7,6 +7,9 @@ export enum ErrorCode {
     SOURCE_UNAVAILABLE = 2002,
     SOURCE_TIMEOUT = 2003,
 
+    // 4xxx: 访问限制
+    RATE_LIMITED = 4001,
+
     // 5xxx: 系统内部错误
     INTERNAL_EXCEPTION = 5000,
 }
