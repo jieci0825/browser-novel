@@ -1,3 +1,3 @@
-<template></template>
-
-<style scoped lang="scss"></style>
+<template>
+  <RouterView />
+</template>
