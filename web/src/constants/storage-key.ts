@@ -1,3 +1,3 @@
 export const STORAGE_KEY = {
-    theme: 'theme',
+    bookshelfLayout: 'bookshelf-layout',
 } as const
