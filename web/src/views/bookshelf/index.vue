@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import type { Book } from './book'
+import BookshelfNavbar from './components/bookshelf-navbar.vue'
+import BookshelfEmptyState from './components/bookshelf-empty-state.vue'
+import BookList from './components/book-list.vue'
 
-const searchKeyword = ref('')
-
-interface Book {
-    id: number
-    title: string
-    author: string
-    cover: string
-    lastRead: string
-    progress: number
-}
+const searchKeyword = ref<string>('')
 
 const books = ref<Book[]>([
     {
@@ -87,76 +82,27 @@ const filteredBooks = computed(() => {
             book.author.includes(searchKeyword.value)
     )
 })
+
+function handleKeywordChange(value: string) {
+    searchKeyword.value = value
+}
 </script>
 
 <template>
     <div class="bookshelf">
-        <header class="navbar">
-            <div class="navbar-inner">
-                <div class="navbar-left">
-                    <h1 class="navbar-title">书架</h1>
-                </div>
-                <div class="navbar-right">
-                    <el-input
-                        v-model="searchKeyword"
-                        class="search-input"
-                        placeholder="搜索书名或作者"
-                        clearable
-                    >
-                        <template #prefix>
-                            <icon-mdi-magnify />
-                        </template>
-                    </el-input>
-                    <el-tooltip
-                        content="帮助"
-                        placement="bottom"
-                    >
-                        <button class="icon-btn">
-                            <icon-mdi-help-circle-outline />
-                        </button>
-                    </el-tooltip>
-                </div>
-            </div>
-        </header>
+        <BookshelfNavbar
+            :keyword="searchKeyword"
+            @update:keyword="handleKeywordChange"
+        />
 
         <main class="content">
-            <div
+            <BookshelfEmptyState
                 v-if="filteredBooks.length === 0"
-                class="empty-state"
-            >
-                <icon-mdi-bookshelf class="empty-icon" />
-                <p>暂无相关书籍</p>
-            </div>
-
-            <div
+            />
+            <BookList
                 v-else
-                class="book-container"
-            >
-                <div
-                    v-for="book in filteredBooks"
-                    :key="book.id"
-                    class="book-card"
-                >
-                    <div class="book-cover">
-                        <img
-                            :src="book.cover"
-                            :alt="book.title"
-                        />
-                        <div class="book-progress">
-                            <el-progress
-                                :percentage="book.progress"
-                                :stroke-width="3"
-                                :show-text="false"
-                                :color="'var(--el-color-primary)'"
-                            />
-                        </div>
-                    </div>
-                    <div class="book-info">
-                        <h3 class="book-title">{{ book.title }}</h3>
-                        <p class="book-author">{{ book.author }}</p>
-                    </div>
-                </div>
-            </div>
+                :books="filteredBooks"
+            />
         </main>
     </div>
 </template>
@@ -164,159 +110,11 @@ const filteredBooks = computed(() => {
 <style scoped lang="scss">
 .bookshelf {
     min-height: 100vh;
+}
 
-    .navbar {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        background-color: var(--color-bg-navbar);
-        border-bottom: 1px solid var(--color-border-light);
-        backdrop-filter: blur(8px);
-
-        .navbar-inner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: var(--content-max-width);
-            margin: 0 auto;
-            padding: 0 20px;
-            height: 56px;
-        }
-
-        .navbar-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .navbar-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0;
-            color: var(--el-text-color-primary);
-        }
-
-        .navbar-right {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .search-input {
-            width: 200px;
-            margin-right: 8px;
-        }
-
-        .icon-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border: none;
-            border-radius: 8px;
-            background: transparent;
-            color: var(--el-text-color-regular);
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-
-            &:hover {
-                background-color: var(--el-fill-color-light);
-                color: var(--el-text-color-primary);
-            }
-        }
-    }
-
-    .content {
-        max-width: var(--content-max-width);
-        margin: 0 auto;
-        padding: 24px 20px;
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 120px 0;
-            color: var(--el-text-color-placeholder);
-
-            .empty-icon {
-                font-size: 64px;
-                margin-bottom: 16px;
-            }
-
-            p {
-                font-size: 14px;
-                margin: 0;
-            }
-        }
-
-        .book-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 24px;
-        }
-
-        .book-card {
-            display: flex;
-            flex-direction: column;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
-
-            &:hover {
-                transform: translateY(-2px);
-
-                .book-cover img {
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-                }
-            }
-        }
-
-        .book-cover {
-            position: relative;
-
-            img {
-                width: 100%;
-                aspect-ratio: 3 / 4;
-                object-fit: cover;
-                border-radius: 6px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                transition: box-shadow 0.2s;
-            }
-
-            .book-progress {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                padding: 0 4px 4px;
-            }
-        }
-
-        .book-info {
-            padding-top: 8px;
-            text-align: center;
-        }
-
-        .book-title {
-            font-size: 14px;
-            font-weight: 500;
-            margin: 0;
-            color: var(--el-text-color-primary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .book-author {
-            font-size: 12px;
-            margin: 4px 0 0;
-            color: var(--el-text-color-secondary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-    }
+.content {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 24px 20px;
 }
 </style>
