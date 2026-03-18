@@ -14,14 +14,10 @@ class NovelDatabase extends Dexie {
         super('browser-novel')
 
         this.version(1).stores({
-            bookshelf: '[sourceId+bookId], addedAt',
+            bookshelf: '[sourceId+bookId], addedAt, lastReadAt',
             readHistory: '[sourceId+bookId], lastReadAt',
             chapterCache:
                 '[sourceId+bookId+chapterId], [sourceId+bookId], lastAccessedAt',
-        })
-
-        this.version(2).stores({
-            bookshelf: '[sourceId+bookId], addedAt, lastReadAt',
         })
     }
 }
