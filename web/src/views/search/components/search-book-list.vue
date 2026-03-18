@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { SearchBook } from '../types'
+import type { BookSearchItem } from '@/api/types/book.type'
 
 defineProps<{
-    list: SearchBook[]
+    list: BookSearchItem[]
     loading: boolean
     hasSearched: boolean
 }>()
 
 const emit = defineEmits<{
-    detail: [book: SearchBook]
-    addToBookshelf: [book: SearchBook]
+    detail: [book: BookSearchItem]
+    addToBookshelf: [book: BookSearchItem]
 }>()
 </script>
 
