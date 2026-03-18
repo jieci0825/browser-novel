@@ -5,18 +5,21 @@ import { withAdapterExceptionAspect } from './aspect'
 import { withAdapterCacheAspect } from './cache-aspect'
 import { cacheService } from '../cache/cache-service'
 import { douyinxsRule } from './sources/douyinxs'
+import type { BookSourceAdapter } from './types'
 
-const adapters = [
-    withAdapterExceptionAspect(
-        withAdapterCacheAspect(new QQReaderAdapter(), cacheService)
-    ),
-    withAdapterExceptionAspect(
-        withAdapterCacheAspect(new RuleBasedAdapter(douyinxsRule), cacheService)
-    ),
+function createAdapter(adapter: BookSourceAdapter): BookSourceAdapter {
+    return withAdapterExceptionAspect(
+        withAdapterCacheAspect(adapter, cacheService)
+    )
+}
+
+const rawAdapters: BookSourceAdapter[] = [
+    new QQReaderAdapter(),
+    new RuleBasedAdapter(douyinxsRule),
 ]
 
-for (const adapter of adapters) {
-    adapterManager.register(adapter)
+for (const adapter of rawAdapters) {
+    adapterManager.register(createAdapter(adapter))
 }
 
 export { adapterManager }
