@@ -7,6 +7,5 @@ export type Book = BookshelfRecord & Partial<Pick<ReadHistoryRecord,
     'lastReadChapterIndex' |
     'totalChapters' |
     'readProgress' |
-    'scrollPosition' |
-    'lastReadAt'
+    'scrollPosition'
 >>
