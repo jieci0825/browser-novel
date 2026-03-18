@@ -1,20 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
-interface Props {
-    keyword: string
-}
-
-const props = defineProps<Props>()
-
-const emit = defineEmits<{
-    (e: 'update:keyword', value: string): void
-}>()
-
-const keywordModel = computed({
-    get: () => props.keyword,
-    set: (value: string) => emit('update:keyword', value),
-})
 </script>
 
 <template>
@@ -24,16 +8,6 @@ const keywordModel = computed({
                 <h1 class="navbar-title">书架</h1>
             </div>
             <div class="navbar-right">
-                <el-input
-                    v-model="keywordModel"
-                    class="search-input"
-                    placeholder="搜索书名或作者"
-                    clearable
-                >
-                    <template #prefix>
-                        <icon-mdi-magnify />
-                    </template>
-                </el-input>
                 <el-tooltip
                     content="帮助"
                     placement="bottom"
@@ -82,11 +56,6 @@ const keywordModel = computed({
         display: flex;
         align-items: center;
         gap: 4px;
-    }
-
-    .search-input {
-        width: 200px;
-        margin-right: 8px;
     }
 
     .icon-btn {

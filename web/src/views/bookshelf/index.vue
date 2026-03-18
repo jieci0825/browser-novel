@@ -1,47 +1,25 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import type { Book } from './book'
 import { getBookshelfWithProgress } from '@/database/services/bookshelf-service'
 import BookshelfNavbar from './components/bookshelf-navbar.vue'
 import BookshelfEmptyState from './components/bookshelf-empty-state.vue'
 import BookList from './components/book-list.vue'
 
-const searchKeyword = ref<string>('')
 const books = ref<Book[]>([])
 
 onMounted(async () => {
     books.value = await getBookshelfWithProgress()
 })
-
-const filteredBooks = computed(() => {
-    if (!searchKeyword.value) return books.value
-    return books.value.filter(
-        book =>
-            book.name.includes(searchKeyword.value) ||
-            book.author.includes(searchKeyword.value)
-    )
-})
-
-function handleKeywordChange(value: string) {
-    searchKeyword.value = value
-}
 </script>
 
 <template>
     <div class="bookshelf">
-        <BookshelfNavbar
-            :keyword="searchKeyword"
-            @update:keyword="handleKeywordChange"
-        />
+        <BookshelfNavbar />
 
         <main class="content">
-            <BookshelfEmptyState
-                v-if="filteredBooks.length === 0"
-            />
-            <BookList
-                v-else
-                :books="filteredBooks"
-            />
+            <BookshelfEmptyState v-if="books.length === 0" />
+            <BookList v-else :books="books" />
         </main>
     </div>
 </template>
