@@ -13,8 +13,11 @@ declare module 'vue' {
   export interface GlobalComponents {
     ElButton: typeof import('element-plus/es')['ElButton']
     ElDialog: typeof import('element-plus/es')['ElDialog']
+    ElEmpty: typeof import('element-plus/es')['ElEmpty']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElProgress: typeof import('element-plus/es')['ElProgress']
+    ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
+    ElTag: typeof import('element-plus/es')['ElTag']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     IconMdiBookshelf: typeof import('~icons/mdi/bookshelf')['default']
     IconMdiHelpCircleOutline: typeof import('~icons/mdi/help-circle-outline')['default']
