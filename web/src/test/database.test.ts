@@ -28,7 +28,7 @@ const mockBook: BookshelfRecord = {
     latestChapter: '第100章',
     status: '连载中',
     addedAt: Date.now(),
-    lastReadAt: null,
+    lastReadAt: Date.now(),
 }
 
 const mockReadHistory: ReadHistoryRecord = {

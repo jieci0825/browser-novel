@@ -10,7 +10,7 @@ export interface BookshelfRecord {
     latestChapter: string
     status: string
     addedAt: number
-    lastReadAt: number | null
+    lastReadAt: number
 }
 
 /** 阅读记录（浏览历史 + 阅读进度） */
