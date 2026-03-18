@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const showNotice = ref(false)
 
 function goToSearch() {
     router.push('/search')
@@ -24,13 +26,43 @@ function goToSearch() {
                     content="帮助"
                     placement="bottom"
                 >
-                    <button class="icon-btn">
+                    <button class="icon-btn" @click="showNotice = true">
                         <icon-mdi-help-circle-outline />
                     </button>
                 </el-tooltip>
             </div>
         </div>
     </header>
+
+    <el-dialog
+        v-model="showNotice"
+        title="使用说明"
+        width="480px"
+        :close-on-click-modal="true"
+    >
+        <div class="notice-content">
+            <section>
+                <h4>📚 关于书源</h4>
+                <p>本站书源均来自公开网络资源，覆盖范围有限。若搜索不到你想看的书籍，可能是当前书源暂不收录，欢迎联系作者反馈。</p>
+            </section>
+            <section>
+                <h4>⚠️ 书籍无法阅读</h4>
+                <p>如果之前加入书架的书籍突然无法正常阅读，通常是对应书源已失效。这属于正常情况，可联系作者跟进处理。</p>
+            </section>
+            <section>
+                <h4>💾 数据存储说明</h4>
+                <p>所有书架数据、阅读进度均保存在本地浏览器中，不会上传至云端，因此也无法在多设备间同步。如有同步需求，欢迎联系作者，后续可考虑支持。</p>
+            </section>
+            <section>
+                <h4>💬 联系作者</h4>
+                <p>有任何问题或建议，欢迎通过以下方式联系：</p>
+                <ul>
+                    <li>邮箱：<a href="mailto:coderjc@qq.com">coderjc@qq.com</a></li>
+                    <li>QQ：2740954762</li>
+                </ul>
+            </section>
+        </div>
+    </el-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -87,6 +119,46 @@ function goToSearch() {
         &:hover {
             background-color: var(--el-fill-color-light);
             color: var(--el-text-color-primary);
+        }
+    }
+}
+
+.notice-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--el-text-color-regular);
+
+    section {
+        h4 {
+            margin: 0 0 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--el-text-color-primary);
+        }
+
+        p {
+            margin: 0;
+        }
+
+        ul {
+            margin: 6px 0 0;
+            padding-left: 18px;
+
+            li {
+                margin-bottom: 2px;
+            }
+        }
+
+        a {
+            color: var(--el-color-primary);
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
         }
     }
 }
