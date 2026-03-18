@@ -1,10 +1,9 @@
 import { adapterManager } from './manager'
-import { QQReaderAdapter } from './qq-reader'
+import { QQReaderAdapter, douyinxsRule } from './sources'
 import { RuleBasedAdapter } from './rule-based/adapter'
 import { withAdapterExceptionAspect } from './aspect'
 import { withAdapterCacheAspect } from './cache-aspect'
 import { cacheService } from '../cache/cache-service'
-import { douyinxsRule } from './sources/douyinxs'
 import type { BookSourceAdapter } from './types'
 
 function createAdapter(adapter: BookSourceAdapter): BookSourceAdapter {

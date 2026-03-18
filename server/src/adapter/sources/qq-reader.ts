@@ -5,7 +5,7 @@ import type {
     BookDetail,
     Chapter,
     ChapterContent,
-} from './types'
+} from '../types'
 
 const http = axios.create({
     timeout: 15000,
