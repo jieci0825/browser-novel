@@ -11,11 +11,14 @@ defineProps<{
         <div class="book-cover">
             <img
                 :src="book.cover"
-                :alt="book.title"
+                :alt="book.name"
             />
-            <div class="book-progress">
+            <div
+                v-if="book.readProgress != null"
+                class="book-progress"
+            >
                 <el-progress
-                    :percentage="book.progress"
+                    :percentage="book.readProgress"
                     :stroke-width="3"
                     :show-text="false"
                     :color="'var(--el-color-primary)'"
@@ -23,7 +26,7 @@ defineProps<{
             </div>
         </div>
         <div class="book-info">
-            <h3 class="book-title">{{ book.title }}</h3>
+            <h3 class="book-title">{{ book.name }}</h3>
             <p class="book-author">{{ book.author }}</p>
         </div>
     </div>

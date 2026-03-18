@@ -11,7 +11,7 @@ defineProps<{
     <div class="book-container">
         <BookCard
             v-for="book in books"
-            :key="book.id"
+            :key="`${book.sourceId}-${book.bookId}`"
             :book="book"
         />
     </div>
