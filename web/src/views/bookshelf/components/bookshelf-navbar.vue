@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function goToSearch() {
+    router.push('/search')
+}
 </script>
 
 <template>
@@ -8,6 +15,11 @@
                 <h1 class="navbar-title">书架</h1>
             </div>
             <div class="navbar-right">
+                <el-tooltip content="搜索" placement="bottom">
+                    <button class="icon-btn" @click="goToSearch">
+                        <icon-mdi-magnify />
+                    </button>
+                </el-tooltip>
                 <el-tooltip
                     content="帮助"
                     placement="bottom"
