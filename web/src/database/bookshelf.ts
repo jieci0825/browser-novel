@@ -5,7 +5,7 @@ import type { Book } from '@/views/bookshelf/book'
 /** 获取书架书籍列表（合并阅读进度），按最后阅读时间降序排列 */
 export async function getBookshelfBookList(): Promise<Book[]> {
     const [shelfList, historyList] = await Promise.all([
-        db.bookshelf.orderBy('addedAt').reverse().toArray(),
+        db.bookshelf.orderBy('lastReadAt').reverse().toArray(),
         db.readHistory.toArray(),
     ])
 

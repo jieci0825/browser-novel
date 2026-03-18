@@ -19,6 +19,10 @@ class NovelDatabase extends Dexie {
             chapterCache:
                 '[sourceId+bookId+chapterId], [sourceId+bookId], lastAccessedAt',
         })
+
+        this.version(2).stores({
+            bookshelf: '[sourceId+bookId], addedAt, lastReadAt',
+        })
     }
 }
 
