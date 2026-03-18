@@ -13,14 +13,16 @@ function createAdapter(adapter: BookSourceAdapter): BookSourceAdapter {
     )
 }
 
-const rawAdapters: BookSourceAdapter[] = [
-    new QQReaderAdapter(),
-    new RuleBasedAdapter(douyinxsRule),
-]
-
-for (const adapter of rawAdapters) {
-    adapterManager.register(createAdapter(adapter))
+function registerAdapters() {
+    const rawAdapters: BookSourceAdapter[] = [
+        new QQReaderAdapter(),
+        new RuleBasedAdapter(douyinxsRule),
+    ]
+    for (const adapter of rawAdapters) {
+        adapterManager.register(createAdapter(adapter))
+    }
 }
+registerAdapters()
 
 export { adapterManager }
 export type { SearchStreamCallbacks } from './manager'
