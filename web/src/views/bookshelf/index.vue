@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import type { Book } from './book'
-import { getBookshelfBookList } from '@/database/bookshelf'
+import { getBookshelfWithProgress } from '@/database/services/bookshelf-service'
 import BookshelfNavbar from './components/bookshelf-navbar.vue'
 import BookshelfEmptyState from './components/bookshelf-empty-state.vue'
 import BookList from './components/book-list.vue'
@@ -10,7 +10,7 @@ const searchKeyword = ref<string>('')
 const books = ref<Book[]>([])
 
 onMounted(async () => {
-    books.value = await getBookshelfBookList()
+    books.value = await getBookshelfWithProgress()
 })
 
 const filteredBooks = computed(() => {
