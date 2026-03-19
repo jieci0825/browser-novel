@@ -18,6 +18,24 @@ export type FieldRule = string | FieldRuleFn
 
 export type FieldRuleFn = (context: FieldRuleContext) => string
 
+/**
+ * 列表定位规则
+ *
+ * 支持两种形式：
+ * 1. string — CSS 选择器（HTML）或 JSON path，直接定位列表元素
+ * 2. 函数 — 当选择器无法精确描述时，用代码返回列表元素数组
+ */
+export type ListRule = string | ListRuleFn
+
+/** HTML 模式：接收 cheerio 实例，返回 cheerio 元素数组 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ListRuleFnHtml = ($: cheerio.CheerioAPI) => cheerio.Cheerio<any>[]
+
+/** JSON 模式：接收原始数据，返回数据项数组 */
+export type ListRuleFnJson = (data: unknown) => unknown[]
+
+export type ListRuleFn = ListRuleFnHtml | ListRuleFnJson
+
 /** 脚本函数接收的上下文，根据 sourceType 不同，可用字段不同 */
 export interface FieldRuleContext {
     /** HTML 模式：cheerio 实例，可用于任意 DOM 查询 */
@@ -59,7 +77,7 @@ export interface SearchRule {
     body?: string // 请求体
     contentType?: string // 内容类型
 
-    list: string
+    list: ListRule
     /** 当提取到的 name 匹配此正则时跳过该项 */
     excludePattern?: string
 
@@ -100,7 +118,7 @@ export interface ChaptersRule {
     url: string
     method?: 'GET' | 'POST'
 
-    list: string
+    list: ListRule
     fields: {
         chapterId: FieldRule
         title: FieldRule

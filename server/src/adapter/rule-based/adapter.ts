@@ -12,6 +12,7 @@ import type {
     ContentPurifyOptions,
     FieldRule,
     FieldRuleContext,
+    ListRule,
 } from './types'
 import { extractHtmlField, extractJsonField, getByPath } from './field-parser'
 import { isArray, isFunction } from '../../utils/check-type'
@@ -321,7 +322,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
     private mapHtmlList(
         html: string,
-        listSelector: string,
+        listRule: ListRule,
         fields: Record<string, FieldRule | undefined>
     ): Record<string, string>[] {
         // 把 html 字符串交给 cheerio 解析成一个可查询的 DOM 结构
@@ -329,11 +330,20 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         const $ = cheerio.load(html)
         const results: Record<string, string>[] = []
 
-        // 用选择器 listSelector 找到所有匹配元素，然后逐个遍历
-        $(listSelector).each((_, el) => {
-            // 这里的 el 就是列表项元素，$(el) 就是列表项元素的 cheerio 对象
-            results.push(this.extractFieldsFromEl($, $(el), fields))
-        })
+        if (isFunction(listRule)) {
+            // 函数模式：由书源自行定位列表元素
+            const elements = (
+                listRule as ($: cheerio.CheerioAPI) => cheerio.Cheerio<any>[]
+            )($)
+            for (const el of elements) {
+                results.push(this.extractFieldsFromEl($, el, fields))
+            }
+        } else {
+            // 选择器模式：用选择器找到所有匹配元素，然后逐个遍历
+            $(listRule).each((_, el) => {
+                results.push(this.extractFieldsFromEl($, $(el), fields))
+            })
+        }
         return results
     }
 
@@ -370,11 +380,17 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
     private mapJsonList(
         data: unknown,
-        listPath: string,
+        listRule: ListRule,
         fields: Record<string, FieldRule | undefined>
     ): Record<string, string>[] {
-        const arr = getByPath(data, listPath)
-        if (!isArray(arr)) return []
+        let arr: unknown[]
+        if (isFunction(listRule)) {
+            const result = (listRule as (data: unknown) => unknown[])(data)
+            arr = isArray(result) ? result : []
+        } else {
+            const result = getByPath(data, listRule)
+            arr = isArray(result) ? result : []
+        }
         return arr.map(item => this.extractJsonFields(item, fields))
     }
 
