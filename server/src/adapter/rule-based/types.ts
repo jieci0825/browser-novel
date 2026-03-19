@@ -114,21 +114,55 @@ export interface DetailRule {
     }
 }
 
-export interface ChaptersRule {
+export interface ChaptersFetchContext {
+    bookId: string
+    sourceUrl: string
+    /**
+     * 复用适配器内部的 HTTP 客户端发起任意请求。
+     *
+     * 直接使用此方法而非自行创建 axios 实例，可确保：
+     * - 携带书源配置的 User-Agent（服务端可能据此做反爬判断）
+     * - 携带书源配置的 Referer 等自定义请求头（防盗链校验）
+     * - 遵守书源统一的超时设置
+     * - 未来若书源新增 cookie、代理等配置，此处自动生效
+     */
+    fetch: (
+        url: string,
+        method?: 'GET' | 'POST',
+        body?: string,
+        contentType?: string
+    ) => Promise<unknown>
+}
+
+/** 标准规则模式：通过 url + list + fields 抓取章节 */
+interface ChaptersRuleStandard {
     url: string
     method?: 'GET' | 'POST'
-
     list: ListRule
     fields: {
         chapterId: FieldRule
         title: FieldRule
     }
-
     pagination?: {
         nextSelector: string
         maxPages?: number
     }
+    fetchChapters?: never
 }
+
+/** 自定义模式：完全由 fetchChapters 函数负责获取章节 */
+interface ChaptersRuleCustom {
+    fetchChapters: (
+        ctx: ChaptersFetchContext
+    ) => Promise<Array<{ chapterId: string; title: string }>>
+    url?: never
+    method?: never
+    list?: never
+    fields?: never
+    pagination?: never
+}
+
+export type ChaptersRule = ChaptersRuleStandard | ChaptersRuleCustom
 
 export interface ContentRule {
     url: string

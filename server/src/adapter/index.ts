@@ -1,5 +1,10 @@
 import { adapterManager } from './manager'
-import { QQReaderAdapter, douyinxsRule, douxswRule } from './sources'
+import {
+    QQReaderAdapter,
+    douyinxsRule,
+    douxswRule,
+    aixiadianzishuRule,
+} from './sources'
 import { RuleBasedAdapter } from './rule-based/adapter'
 import { withAdapterExceptionAspect } from './aspect'
 import { withAdapterCacheAspect } from './cache-aspect'
@@ -27,24 +32,30 @@ const adapterConfigs: (AdapterConfig | ChainedAdapterConfig)[] = [
     // 独立书源
     {
         enabled: true,
+        adapter: new RuleBasedAdapter(aixiadianzishuRule),
+        aspects: [exceptionAspect],
+    },
+
+    {
+        enabled: false,
         adapter: new QQReaderAdapter(),
         aspects: defaultAspects,
     },
 
     // 分组书源 —— 链式 fallback
     {
-        enabled: true,
+        enabled: false,
         groupId: 'dy-group',
         groupName: '小说聚合',
         children: [
             {
-                enabled: false,
-                adapter: new RuleBasedAdapter(douyinxsRule),
+                enabled: true,
+                adapter: new RuleBasedAdapter(douxswRule),
                 aspects: defaultAspects,
             },
             {
                 enabled: true,
-                adapter: new RuleBasedAdapter(douxswRule),
+                adapter: new RuleBasedAdapter(douyinxsRule),
                 aspects: defaultAspects,
             },
         ],

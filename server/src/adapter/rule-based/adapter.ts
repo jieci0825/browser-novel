@@ -148,8 +148,20 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
     async getChapters(bookId: string): Promise<Chapter[]> {
         const { chapters: rule } = this.rule
+
+        // 自定义模式：完全由 fetchChapters 函数负责
+        if ('fetchChapters' in rule && isFunction(rule.fetchChapters)) {
+            const items = await rule.fetchChapters({
+                bookId,
+                sourceUrl: this.rule.sourceUrl,
+                fetch: this.fetch.bind(this),
+            })
+            return items.map((item, index) => ({ ...item, index }))
+        }
+
+        // 标准规则模式
         const vars = { bookId }
-        let url: string | null = this.buildUrl(rule.url, vars)
+        let url: string | null = this.buildUrl(rule.url!, vars)
 
         const allChapters: Chapter[] = []
         const seenIds = new Set<string>()
@@ -164,8 +176,8 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             const data = await this.fetch(url, rule.method)
 
             const items = this.isJson()
-                ? this.mapJsonList(data, rule.list, rule.fields)
-                : this.mapHtmlList(data as string, rule.list, rule.fields)
+                ? this.mapJsonList(data, rule.list!, rule.fields!)
+                : this.mapHtmlList(data as string, rule.list!, rule.fields!)
 
             let newCount = 0
             for (const item of items) {

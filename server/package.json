@@ -11,6 +11,7 @@
         "@koa/cors": "^5.0.0",
         "axios": "^1.7.9",
         "cheerio": "^1.0.0",
+        "iconv-lite": "^0.7.2",
         "koa": "^2.15.3",
         "koa-compress": "^5.2.0",
         "koa-router": "^13.0.1",
