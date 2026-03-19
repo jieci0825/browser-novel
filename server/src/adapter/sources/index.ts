@@ -1,2 +1,2 @@
 export { QQReaderAdapter } from './qq-reader'
-export { douyinxsRule } from './douyinxs'
+export { douyinxsRule } from './dy/douyinxs'
