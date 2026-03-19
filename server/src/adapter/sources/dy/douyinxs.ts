@@ -1,4 +1,4 @@
-import type { BookSourceRule } from '../rule-based/types'
+import type { BookSourceRule } from '../../rule-based/types'
 
 export const douyinxsRule: BookSourceRule = {
     sourceId: 'douyinxs',
