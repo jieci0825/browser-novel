@@ -201,41 +201,70 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         chapterId: string
     ): Promise<ChapterContent> {
         const { content: rule } = this.rule
-        const url = this.buildUrl(rule.url, { bookId, chapterId })
-        const data = await this.fetch(url, rule.method)
+        let url: string | null = this.buildUrl(rule.url, {
+            bookId,
+            chapterId,
+        })
 
-        if (this.isJson()) {
-            const fields = this.extractJsonFields(data, rule.fields)
-            return {
-                title: fields.title ?? '',
-                content: fields.content ?? '',
+        let title = ''
+        const contentParts: string[] = []
+        const visitedUrls = new Set<string>()
+        const maxPages = 20 // 安全上限，防止死循环
+
+        while (url && visitedUrls.size < maxPages) {
+            if (visitedUrls.has(url)) break
+            visitedUrls.add(url)
+
+            const data = await this.fetch(url, rule.method)
+
+            if (this.isJson()) {
+                const fields = this.extractJsonFields(data, rule.fields)
+                if (!title) title = fields.title ?? ''
+                contentParts.push(fields.content ?? '')
+                break // JSON 模式暂不支持分页
             }
-        }
 
-        const $ = cheerio.load(data as string)
+            const $ = cheerio.load(data as string)
 
-        if (rule.purify?.removeSelectors) {
-            for (const sel of rule.purify.removeSelectors) {
-                $(sel).remove()
+            if (rule.purify?.removeSelectors) {
+                for (const sel of rule.purify.removeSelectors) {
+                    $(sel).remove()
+                }
             }
-        }
 
-        const root = $.root()
-        const fnCtx: FieldRuleContext = {
-            $,
-            el: root,
-            sourceUrl: this.rule.sourceUrl,
-        }
-        const title =
-            typeof rule.fields.title === 'function'
-                ? rule.fields.title(fnCtx)
-                : extractHtmlField($, root, rule.fields.title)
-        const rawContent =
-            typeof rule.fields.content === 'function'
+            const root = $.root()
+            const fnCtx: FieldRuleContext = {
+                $,
+                el: root,
+                sourceUrl: this.rule.sourceUrl,
+            }
+
+            // 标题只取第一页的
+            if (!title) {
+                title = isFunction(rule.fields.title)
+                    ? rule.fields.title(fnCtx)
+                    : extractHtmlField($, root, rule.fields.title)
+            }
+
+            const rawContent = isFunction(rule.fields.content)
                 ? rule.fields.content(fnCtx)
                 : extractHtmlField($, root, rule.fields.content)
-        const content = this.purifyText(rawContent, rule.purify)
 
+            contentParts.push(rawContent)
+
+            // 尝试获取下一页 URL
+            if (rule.nextContentUrl) {
+                const nextHref = isFunction(rule.nextContentUrl)
+                    ? rule.nextContentUrl(fnCtx)
+                    : extractHtmlField($, root, rule.nextContentUrl)
+
+                url = nextHref ? this.resolveHref(nextHref) : null
+            } else {
+                break // 没有分页规则，直接退出
+            }
+        }
+
+        const content = this.purifyText(contentParts.join('\n'), rule.purify)
         return { title, content }
     }
 
@@ -417,11 +446,21 @@ export class RuleBasedAdapter implements BookSourceAdapter {
     private purifyText(raw: string, options?: ContentPurifyOptions): string {
         if (!options) return raw
 
+        // 自定义清洗函数：完全接管，直接返回
+        if (options.customPurify) {
+            return options.customPurify(raw)
+        }
+
         let text = raw
 
         if (options.brToNewline !== false) {
             text = text.replace(/<br\s*\/?>/gi, '\n')
         }
+        // 块级标签（p / div / li 等）的闭合标签 → 换行，保留段落分隔
+        text = text.replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+        // 块级标签的开始标签直接移除（换行已由闭合标签产生）
+        text = text.replace(/<(p|div|li|h[1-6])(\s[^>]*)?>/gi, '')
+
         if (options.stripNbsp !== false) {
             text = text.replace(/&nbsp;/g, ' ')
         }

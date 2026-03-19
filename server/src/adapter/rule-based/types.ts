@@ -139,13 +139,26 @@ export interface ContentRule {
         content: FieldRule
     }
 
+    /** 正文分页：下一页链接的提取规则，用于多页正文拼接 */
+    nextContentUrl?: FieldRule
+
     purify?: ContentPurifyOptions
 }
 
 export interface ContentPurifyOptions {
+    /**
+     * 自定义清洗函数 — 当提供时，完全替代内置清洗逻辑。
+     * 接收提取到的原始 HTML 字符串，返回清洗后的纯文本。
+     */
+    customPurify?: (rawHtml: string) => string
+    /** 将 HTML 中的 <br> 标签转换为换行符 \n，默认 true */
     brToNewline?: boolean
+    /** 将 &nbsp;（不换行空格）替换为普通空格，默认 true */
     stripNbsp?: boolean
+    /** 在提取正文前，先移除匹配这些 CSS 选择器的 DOM 元素（如广告、推荐栏等） */
     removeSelectors?: string[]
+    /** 去除每行首尾的空白字符，默认 true */
     trimLines?: boolean
+    /** 过滤掉空行（trim 后为空字符串的行），默认 true */
     filterEmpty?: boolean
 }

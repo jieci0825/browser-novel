@@ -58,8 +58,9 @@ export const douxswRule: BookSourceRule = {
             author: '.synopsisArea_detail .author | replace:^作者：,',
             intro: '.review p',
             latestChapter: '.synopsisArea_detail .lastchapter a',
-            wordCount:
-                '#info p:nth-of-type(3) | regex:(\\d+(?:\\.\\d+)?[万千]?)\\s*字',
+            wordCount: () => {
+                return ''
+            },
             status: ({ $ }) => {
                 if (!$) return ''
                 const detailDiv = $('.synopsisArea_detail')
@@ -72,5 +73,23 @@ export const douxswRule: BookSourceRule = {
         },
     },
 
-    content: {},
+    content: {
+        url: '{{baseUrl}}/bqg/{{bookId}}/{{chapterId}}.html',
+        fields: {
+            title: '#top .title',
+            content: '#chaptercontent@html',
+        },
+        nextContentUrl: ({ $ }) => {
+            if (!$) return ''
+            // "下一页"是同章分页，"下一章"则不是，只取"下一页"
+            const href = $('a:contains("下一页")').attr('href')
+            return href ?? ''
+        },
+        purify: {
+            brToNewline: true,
+            stripNbsp: true,
+            trimLines: true,
+            filterEmpty: true,
+        },
+    },
 }
