@@ -9,6 +9,7 @@ import type {
 } from '../types'
 import type {
     BookSourceRule,
+    ContentFetchContext,
     ContentPurifyOptions,
     FieldRule,
     FieldRuleContext,
@@ -213,7 +214,26 @@ export class RuleBasedAdapter implements BookSourceAdapter {
         chapterId: string
     ): Promise<ChapterContent> {
         const { content: rule } = this.rule
-        let url: string | null = this.buildUrl(rule.url, {
+
+        // 自定义模式：完全由 fetchContent 函数负责
+        if ('fetchContent' in rule && isFunction(rule.fetchContent)) {
+            const ctx: ContentFetchContext = {
+                bookId,
+                chapterId,
+                sourceUrl: this.rule.sourceUrl,
+                fetch: this.fetch.bind(this),
+                fetchRaw: this.fetchRaw.bind(this),
+            }
+            const { title, content } = await rule.fetchContent(ctx)
+            return {
+                title,
+                content: this.purifyText(content, rule.purify),
+            }
+        }
+
+        // 标准规则模式
+        const stdRule = rule as Extract<typeof rule, { url: string }>
+        let url: string | null = this.buildUrl(stdRule.url, {
             bookId,
             chapterId,
         })
@@ -227,10 +247,10 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             if (visitedUrls.has(url)) break
             visitedUrls.add(url)
 
-            const data = await this.fetch(url, rule.method)
+            const data = await this.fetch(url, stdRule.method)
 
             if (this.isJson()) {
-                const fields = this.extractJsonFields(data, rule.fields)
+                const fields = this.extractJsonFields(data, stdRule.fields)
                 if (!title) title = fields.title ?? ''
                 contentParts.push(fields.content ?? '')
                 break // JSON 模式暂不支持分页
@@ -238,8 +258,8 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
             const $ = cheerio.load(data as string)
 
-            if (rule.purify?.removeSelectors) {
-                for (const sel of rule.purify.removeSelectors) {
+            if (stdRule.purify?.removeSelectors) {
+                for (const sel of stdRule.purify.removeSelectors) {
                     $(sel).remove()
                 }
             }
@@ -253,22 +273,22 @@ export class RuleBasedAdapter implements BookSourceAdapter {
 
             // 标题只取第一页的
             if (!title) {
-                title = isFunction(rule.fields.title)
-                    ? rule.fields.title(fnCtx)
-                    : extractHtmlField($, root, rule.fields.title ?? '')
+                title = isFunction(stdRule.fields.title)
+                    ? stdRule.fields.title(fnCtx)
+                    : extractHtmlField($, root, stdRule.fields.title ?? '')
             }
 
-            const rawContent = isFunction(rule.fields.content)
-                ? rule.fields.content(fnCtx)
-                : extractHtmlField($, root, rule.fields.content)
+            const rawContent = isFunction(stdRule.fields.content)
+                ? stdRule.fields.content(fnCtx)
+                : extractHtmlField($, root, stdRule.fields.content)
 
             contentParts.push(rawContent)
 
             // 尝试获取下一页 URL
-            if (rule.nextContentUrl) {
-                const nextHref = isFunction(rule.nextContentUrl)
-                    ? rule.nextContentUrl(fnCtx)
-                    : extractHtmlField($, root, rule.nextContentUrl)
+            if (stdRule.nextContentUrl) {
+                const nextHref = isFunction(stdRule.nextContentUrl)
+                    ? stdRule.nextContentUrl(fnCtx)
+                    : extractHtmlField($, root, stdRule.nextContentUrl)
 
                 url = nextHref ? this.resolveHref(nextHref) : null
             } else {
@@ -276,7 +296,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             }
         }
 
-        const content = this.purifyText(contentParts.join('\n'), rule.purify)
+        const content = this.purifyText(contentParts.join('\n'), stdRule.purify)
         return { title, content }
     }
 
@@ -357,6 +377,19 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             headers: Object.keys(headers).length ? headers : undefined,
         })
         return response.data
+    }
+
+    private async fetchRaw(
+        url: string,
+        extraHeaders?: Record<string, string>
+    ): Promise<{ data: unknown; headers: Record<string, any> }> {
+        const response = await this.http.request({
+            url,
+            method: 'GET',
+            responseType: 'text',
+            headers: extraHeaders,
+        })
+        return { data: response.data, headers: response.headers as Record<string, any> }
     }
 
     /* ======================== internal: html extraction ======================== */

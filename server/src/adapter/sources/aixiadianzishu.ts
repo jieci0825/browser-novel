@@ -1,5 +1,5 @@
 import type { BookSourceRule } from '../rule-based/types'
-import type * as cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 
 // https://ixdzs8.com/bsearch?q=%E6%8B%AC%E5%BC%A7%E7%AC%91%E7%AC%91
 
@@ -78,11 +78,30 @@ export const aixiadianzishuRule: BookSourceRule = {
     },
 
     content: {
-        url: '{{baseUrl}}/read/{{bookId}}/p{{chapterId}}.html',
-        method: 'GET',
-        fields: {
-            title: 'h3',
-            content: '.page-content section@html',
+        fetchContent: async ({ bookId, chapterId, sourceUrl, fetchRaw }) => {
+            const url = `${sourceUrl}/read/${bookId}/p${chapterId}.html`
+
+            // 第一次请求，拿到 challenge 页面和 Set-Cookie
+            const resp1 = await fetchRaw(url)
+            let html = resp1.data as string
+
+            // 检测到 challenge，带上 Cookie 重新请求
+            const tokenMatch = html.match(/let token = "([^"]+)"/)
+            if (tokenMatch) {
+                const token = tokenMatch[1]
+                const challengeUrl = `${url}?challenge=${encodeURIComponent(token)}`
+                const cookieStr = (resp1.headers['set-cookie'] ?? [])
+                    .map((c: string) => c.split(';')[0])
+                    .join('; ')
+                const resp2 = await fetchRaw(challengeUrl, { Cookie: cookieStr })
+                html = resp2.data as string
+            }
+
+            const $ = cheerio.load(html)
+            const title = $('h3').first().text().trim()
+            const content = $('.page-content section').html() ?? ''
+
+            return { title, content }
         },
         purify: {
             brToNewline: true,

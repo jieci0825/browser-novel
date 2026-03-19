@@ -164,20 +164,54 @@ interface ChaptersRuleCustom {
 
 export type ChaptersRule = ChaptersRuleStandard | ChaptersRuleCustom
 
-export interface ContentRule {
+export interface ContentFetchContext {
+    bookId: string
+    chapterId: string
+    sourceUrl: string
+    /**
+     * 复用适配器内部的 HTTP 客户端发起任意请求。
+     */
+    fetch: (
+        url: string,
+        method?: 'GET' | 'POST',
+        body?: string,
+        contentType?: string
+    ) => Promise<unknown>
+    /**
+     * 与 fetch 相同，但返回完整响应对象（含响应头），用于需要读取 Set-Cookie 等场景。
+     */
+    fetchRaw: (
+        url: string,
+        extraHeaders?: Record<string, string>
+    ) => Promise<{ data: unknown; headers: Record<string, any> }>
+}
+
+/** 标准规则模式 */
+interface ContentRuleStandard {
     url: string
     method?: 'GET' | 'POST'
-
     fields: {
         title?: FieldRule
         content: FieldRule
     }
-
     /** 正文分页：下一页链接的提取规则，用于多页正文拼接 */
     nextContentUrl?: FieldRule
-
     purify?: ContentPurifyOptions
+    fetchContent?: never
 }
+
+/** 自定义模式：完全由 fetchContent 函数负责获取正文 */
+interface ContentRuleCustom {
+    fetchContent: (ctx: ContentFetchContext) => Promise<{ title: string; content: string }>
+    /** 对 fetchContent 返回的 content 做后处理（可选） */
+    purify?: ContentPurifyOptions
+    url?: never
+    method?: never
+    fields?: never
+    nextContentUrl?: never
+}
+
+export type ContentRule = ContentRuleStandard | ContentRuleCustom
 
 export interface ContentPurifyOptions {
     /**
