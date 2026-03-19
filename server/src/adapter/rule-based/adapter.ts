@@ -243,7 +243,7 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             if (!title) {
                 title = isFunction(rule.fields.title)
                     ? rule.fields.title(fnCtx)
-                    : extractHtmlField($, root, rule.fields.title)
+                    : extractHtmlField($, root, rule.fields.title ?? '')
             }
 
             const rawContent = isFunction(rule.fields.content)

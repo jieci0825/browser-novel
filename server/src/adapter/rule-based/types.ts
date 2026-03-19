@@ -135,7 +135,7 @@ export interface ContentRule {
     method?: 'GET' | 'POST'
 
     fields: {
-        title: FieldRule
+        title?: FieldRule
         content: FieldRule
     }
 

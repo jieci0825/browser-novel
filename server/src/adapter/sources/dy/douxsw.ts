@@ -76,7 +76,6 @@ export const douxswRule: BookSourceRule = {
     content: {
         url: '{{baseUrl}}/bqg/{{bookId}}/{{chapterId}}.html',
         fields: {
-            title: '#top .title',
             content: '#chaptercontent@html',
         },
         nextContentUrl: ({ $ }) => {

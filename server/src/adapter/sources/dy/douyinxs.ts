@@ -65,7 +65,6 @@ export const douyinxsRule: BookSourceRule = {
     content: {
         url: '{{baseUrl}}/bqg/{{bookId}}/{{chapterId}}.html',
         fields: {
-            title: '.bookname h1 || h1 || title',
             content: '#content@html',
         },
         purify: {
