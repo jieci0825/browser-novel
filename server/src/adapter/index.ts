@@ -45,7 +45,7 @@ const adapterConfigs: (AdapterConfig | ChainedAdapterConfig)[] = [
             {
                 enabled: true,
                 adapter: new RuleBasedAdapter(douxswRule),
-                aspects: [exceptionAspect],
+                aspects: defaultAspects,
             },
         ],
     },
