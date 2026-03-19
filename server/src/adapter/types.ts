@@ -59,3 +59,28 @@ export interface BookSourceAdapter {
     /** 获取章节正文 */
     getContent(bookId: string, chapterId: string): Promise<ChapterContent>
 }
+
+/** 适配器切面 —— 接收一个适配器，返回增强后的适配器 */
+export type AdapterAspect = (adapter: BookSourceAdapter) => BookSourceAdapter
+
+/** 单个书源配置 */
+export interface AdapterConfig {
+    /** 是否启用该书源，默认 true */
+    enabled?: boolean
+    /** 书源适配器实例 */
+    adapter: BookSourceAdapter
+    /** 要应用的切面列表，按数组顺序由内向外包裹（先缓存后异常 → [cache, exception]） */
+    aspects?: AdapterAspect[]
+}
+
+/** 链式分组书源配置 */
+export interface ChainedAdapterConfig {
+    /** 是否启用该分组，默认 true */
+    enabled?: boolean
+    /** 分组 ID */
+    groupId: string
+    /** 分组名称 */
+    groupName: string
+    /** 子书源配置列表 */
+    children: AdapterConfig[]
+}
