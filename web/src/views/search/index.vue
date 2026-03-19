@@ -26,9 +26,9 @@ async function handleSearch() {
     try {
         await bookApi.searchAll(
             keyword.value.trim(),
-            (event) => {
+            event => {
                 if (event.type === 'result') {
-                    searchList.value.push(...event.items)
+                    searchList.value.unshift(...event.items)
                 }
             },
             abortController.signal

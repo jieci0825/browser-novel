@@ -78,14 +78,12 @@ const emit = defineEmits<{
                             <div class="book-actions">
                                 <el-button
                                     type="primary"
-                                    size="small"
                                     @click="emit('detail', book)"
                                     >书籍详情</el-button
                                 >
                                 <el-button
                                     type="primary"
                                     plain
-                                    size="small"
                                     @click="emit('addToBookshelf', book)"
                                     >加入书架</el-button
                                 >
