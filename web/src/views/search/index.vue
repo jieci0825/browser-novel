@@ -2,6 +2,7 @@
 import { ref, onUnmounted } from 'vue'
 import { bookApi } from '@/api'
 import type { BookSearchItem } from '@/api/types/book.type'
+import { sortByRelevance } from '@/utils/search-relevance'
 import SearchBar from './components/search-bar.vue'
 import SearchBookList from './components/search-book-list.vue'
 
@@ -28,7 +29,8 @@ async function handleSearch() {
             keyword.value.trim(),
             event => {
                 if (event.type === 'result') {
-                    searchList.value.unshift(...event.items)
+                    searchList.value.push(...event.items)
+                    sortByRelevance(searchList.value, keyword.value)
                 }
             },
             abortController.signal
