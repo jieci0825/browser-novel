@@ -18,6 +18,11 @@ const router = createRouter({
             name: 'not-found',
             component: () => import('@/views/not-found/index.vue'),
         },
+        {
+            path: '/detail/:sourceId/:bookId',
+            name: 'detail',
+            component: () => import('@/views/detail/index.vue'),
+        },
     ],
 })
 
