@@ -59,7 +59,7 @@ const emit = defineEmits<{
                             <el-tag
                                 size="small"
                                 type="info"
-                                >{{ book.author }}</el-tag
+                                >作者：{{ book.author }}</el-tag
                             >
                             <el-tag
                                 size="small"
