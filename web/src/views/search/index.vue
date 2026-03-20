@@ -3,6 +3,8 @@ import { ref, onUnmounted } from 'vue'
 import { bookApi } from '@/api'
 import type { BookSearchItem } from '@/api/types/book.type'
 import { sortByRelevance } from '@/utils/search-relevance'
+import { addToBookshelf, isInBookshelf } from '@/database/services/bookshelf-service'
+import { ElMessage } from 'element-plus'
 import SearchBar from './components/search-bar.vue'
 import SearchBookList from './components/search-book-list.vue'
 
@@ -29,7 +31,11 @@ async function handleSearch() {
             keyword.value.trim(),
             event => {
                 if (event.type === 'result') {
-                    searchList.value.push(...event.items)
+                    const items = event.items.map(item => ({
+                        ...item,
+                        sourceName: event.sourceName,
+                    }))
+                    searchList.value.push(...items)
                     sortByRelevance(searchList.value, keyword.value)
                 }
             },
@@ -44,9 +50,26 @@ async function handleSearch() {
     }
 }
 
-function handleAddToBookshelf(book: BookSearchItem) {
-    // TODO: 加入书架逻辑
-    console.log('加入书架', book)
+async function handleAddToBookshelf(book: BookSearchItem) {
+    const already = await isInBookshelf(book.sourceId, book.bookId)
+    if (already) {
+        ElMessage.info('该书已在书架中')
+        return
+    }
+    await addToBookshelf({
+        sourceId: book.sourceId,
+        bookId: book.bookId,
+        sourceName: book.sourceName ?? '',
+        name: book.name,
+        author: book.author,
+        cover: book.cover ?? '',
+        intro: book.intro ?? '',
+        latestChapter: book.latestChapter ?? '',
+        status: book.status ?? '',
+        addedAt: Date.now(),
+        lastReadAt: 0,
+    })
+    ElMessage.success('已加入书架')
 }
 
 function handleGoDetail(book: BookSearchItem) {

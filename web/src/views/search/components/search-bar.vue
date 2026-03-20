@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
 defineProps<{
     loading: boolean
 }>()
@@ -7,6 +9,8 @@ const keyword = defineModel<string>({ required: true })
 const emit = defineEmits<{
     search: []
 }>()
+
+const router = useRouter()
 
 function handleSearch() {
     emit('search')
@@ -17,6 +21,12 @@ function handleSearch() {
     <div class="search-bar-wrap">
         <div class="search-bar-inner">
             <div class="search-bar-row">
+                <el-button
+                    circle
+                    @click="router.push({ name: 'bookshelf' })"
+                >
+                    <icon-mdi-arrow-left />
+                </el-button>
                 <el-input
                     v-model="keyword"
                     placeholder="搜索书名、作者..."
@@ -51,6 +61,7 @@ function handleSearch() {
 
         .search-bar-row {
             display: flex;
+            align-items: center;
             gap: 8px;
         }
     }

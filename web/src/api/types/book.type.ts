@@ -8,6 +8,7 @@ export interface BookSource {
 export interface BookSearchItem {
     sourceId: string
     bookId: string
+    sourceName?: string
     name: string
     author: string
     cover?: string

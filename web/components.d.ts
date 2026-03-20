@@ -19,6 +19,7 @@ declare module 'vue' {
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
     ElTag: typeof import('element-plus/es')['ElTag']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
+    IconMdiArrowLeft: typeof import('~icons/mdi/arrow-left')['default']
     IconMdiBookshelf: typeof import('~icons/mdi/bookshelf')['default']
     IconMdiHelpCircleOutline: typeof import('~icons/mdi/help-circle-outline')['default']
     IconMdiMagnify: typeof import('~icons/mdi/magnify')['default']
