@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import type { BookSearchItem } from '@/api/types/book.type'
 
 defineProps<{
@@ -8,9 +9,15 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-    detail: [book: BookSearchItem]
     addToBookshelf: [book: BookSearchItem]
 }>()
+
+const router = useRouter()
+
+function goDetail(book: BookSearchItem) {
+    sessionStorage.setItem('fromDetail', '1')
+    router.push({ name: 'detail', params: { sourceId: book.sourceId, bookId: book.bookId } })
+}
 </script>
 
 <template>
@@ -78,7 +85,7 @@ const emit = defineEmits<{
                             <div class="book-actions">
                                 <el-button
                                     type="primary"
-                                    @click="emit('detail', book)"
+                                    @click="goDetail(book)"
                                     >书籍详情</el-button
                                 >
                                 <el-button

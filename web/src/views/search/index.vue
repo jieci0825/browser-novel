@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
+import { onActivated, onDeactivated } from 'vue'
 import { bookApi } from '@/api'
 import type { BookSearchItem } from '@/api/types/book.type'
 import { sortByRelevance } from '@/utils/search-relevance'
@@ -8,12 +9,15 @@ import { ElMessage } from 'element-plus'
 import SearchBar from './components/search-bar.vue'
 import SearchBookList from './components/search-book-list.vue'
 
+defineOptions({ name: 'SearchPage' })
+
 const keyword = ref('')
 const loading = ref(false)
 const searchList = ref<BookSearchItem[]>([])
 const hasSearched = ref(false)
 
 let abortController: AbortController | null = null
+let savedScrollY = 0
 
 async function handleSearch() {
     if (!keyword.value.trim()) return
@@ -72,10 +76,27 @@ async function handleAddToBookshelf(book: BookSearchItem) {
     ElMessage.success('已加入书架')
 }
 
-function handleGoDetail(book: BookSearchItem) {
-    // TODO: 跳转书籍详情
-    console.log('书籍详情', book)
-}
+onDeactivated(() => {
+    savedScrollY = window.scrollY
+    abortController?.abort()
+})
+
+onActivated(() => {
+    const fromDetail = sessionStorage.getItem('fromDetail')
+    sessionStorage.removeItem('fromDetail')
+
+    if (fromDetail) {
+        // 从详情返回，恢复滚动位置
+        window.scrollTo({ top: savedScrollY, behavior: 'instant' })
+    } else {
+        // 从其他页面（如书架）进入，清空状态
+        keyword.value = ''
+        searchList.value = []
+        hasSearched.value = false
+        savedScrollY = 0
+        window.scrollTo({ top: 0, behavior: 'instant' })
+    }
+})
 
 onUnmounted(() => {
     abortController?.abort()
@@ -93,7 +114,6 @@ onUnmounted(() => {
             :list="searchList"
             :loading="loading"
             :has-searched="hasSearched"
-            @detail="handleGoDetail"
             @add-to-bookshelf="handleAddToBookshelf"
         />
     </div>
