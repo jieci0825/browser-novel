@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { bookApi } from '@/api'
 import type { BookDetail, Chapter } from '@/api/types/book.type'
 import DetailNavbar from './components/detail-navbar.vue'
@@ -10,6 +10,7 @@ import ChapterList from './components/chapter-list.vue'
 defineOptions({ name: 'DetailPage' })
 
 const route = useRoute()
+const router = useRouter()
 
 const sourceId = route.params.sourceId as string
 const bookId = route.params.bookId as string
@@ -50,6 +51,13 @@ async function fetchChapters() {
         chaptersLoading.value = false
     }
 }
+
+function handleChapterClick(chapter: Chapter) {
+    router.push({
+        name: 'read',
+        params: { sourceId, bookId, chapterId: chapter.chapterId },
+    })
+}
 </script>
 
 <template>
@@ -66,6 +74,7 @@ async function fetchChapters() {
             :loading="chaptersLoading"
             :error="chaptersError"
             @retry="fetchChapters"
+            @chapter-click="handleChapterClick"
         />
     </div>
 </template>

@@ -9,6 +9,7 @@ defineProps<{
 
 const emit = defineEmits<{
     retry: []
+    chapterClick: [chapter: Chapter]
 }>()
 </script>
 
@@ -37,6 +38,7 @@ const emit = defineEmits<{
                     v-for="chapter in chapters"
                     :key="chapter.chapterId"
                     class="chapter-item"
+                    @click="emit('chapterClick', chapter)"
                 >
                     <span class="chapter-title">{{ chapter.title }}</span>
                 </div>
