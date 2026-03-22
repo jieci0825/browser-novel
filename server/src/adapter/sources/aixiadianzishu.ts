@@ -44,6 +44,7 @@ export const aixiadianzishuRule: BookSourceRule = {
                 // 将 br 都替换成换行符
                 return intro.replace(/<br\s*\/?>/gi, '\n')
             },
+            cover: '.n-img img@src',
             latestChapter: '.n-text p:nth-of-type(4) a',
             wordCount: '.n-text .nsize',
             status: '.n-text p:nth-of-type(2) span',
@@ -89,11 +90,15 @@ export const aixiadianzishuRule: BookSourceRule = {
             const tokenMatch = html.match(/let token = "([^"]+)"/)
             if (tokenMatch) {
                 const token = tokenMatch[1]
-                const challengeUrl = `${url}?challenge=${encodeURIComponent(token)}`
+                const challengeUrl = `${url}?challenge=${encodeURIComponent(
+                    token
+                )}`
                 const cookieStr = (resp1.headers['set-cookie'] ?? [])
                     .map((c: string) => c.split(';')[0])
                     .join('; ')
-                const resp2 = await fetchRaw(challengeUrl, { Cookie: cookieStr })
+                const resp2 = await fetchRaw(challengeUrl, {
+                    Cookie: cookieStr,
+                })
                 html = resp2.data as string
             }
 
