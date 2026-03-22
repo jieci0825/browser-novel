@@ -2,7 +2,12 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { bookApi } from '@/api'
-import type { ChapterContent, Chapter } from '@/api/types/book.type'
+import type { ChapterContent, Chapter, BookDetail } from '@/api/types/book.type'
+import {
+    isInBookshelf,
+    addToBookshelf,
+} from '@/database/services/bookshelf-service'
+import { ElMessage } from 'element-plus'
 import { initReadSettings } from './config/read-settings'
 import ReadContent from './components/read-content.vue'
 import ReadSidebar from './components/read-sidebar.vue'
@@ -20,6 +25,8 @@ const bookId = route.params.bookId as string
 
 const content = ref<ChapterContent | null>(null)
 const chapters = ref<Chapter[]>([])
+const detail = ref<BookDetail | null>(null)
+const inBookshelf = ref(true)
 const contentLoading = ref(true)
 const contentError = ref('')
 const sidebarVisible = ref(false)
@@ -49,6 +56,8 @@ function handleKeydown(e: KeyboardEvent) {
 onMounted(async () => {
     initReadSettings()
     window.addEventListener('keydown', handleKeydown)
+    checkBookshelf()
+    fetchDetail()
     await fetchChapters()
     await fetchContent()
 })
@@ -99,6 +108,41 @@ function goChapter(direction: 'prev' | 'next') {
     })
 }
 
+async function fetchDetail() {
+    try {
+        detail.value = await bookApi.getDetail(sourceId, bookId)
+    } catch {
+        // 详情获取失败不阻塞阅读
+    }
+}
+
+async function checkBookshelf() {
+    inBookshelf.value = await isInBookshelf(sourceId, bookId)
+}
+
+async function handleAddToBookshelf() {
+    if (!detail.value) {
+        ElMessage.warning('书籍信息加载中，请稍后再试')
+        return
+    }
+    const d = detail.value
+    await addToBookshelf({
+        sourceId: d.sourceId,
+        bookId: d.bookId,
+        sourceName: '',
+        name: d.name,
+        author: d.author,
+        cover: d.cover ?? '',
+        intro: d.intro ?? '',
+        latestChapter: d.latestChapter ?? '',
+        status: d.status ?? '',
+        addedAt: Date.now(),
+        lastReadAt: Date.now(),
+    })
+    inBookshelf.value = true
+    ElMessage.success('已加入书架')
+}
+
 function handleCatalog() {
     catalogVisible.value = true
 }
@@ -129,9 +173,11 @@ function scrollTo(position: 'top' | 'bottom') {
     <div class="read-page">
         <ReadSidebar
             :visible="sidebarVisible"
+            :in-bookshelf="inBookshelf"
             @catalog="handleCatalog"
             @settings="handleSettings"
             @bookshelf="handleBookshelf"
+            @add-to-bookshelf="handleAddToBookshelf"
             @scroll-top="scrollTo('top')"
             @scroll-bottom="scrollTo('bottom')"
         />

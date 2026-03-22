@@ -1,12 +1,14 @@
 <script setup lang="ts">
 defineProps<{
     visible: boolean
+    inBookshelf: boolean
 }>()
 
 const emit = defineEmits<{
     catalog: []
     settings: []
     bookshelf: []
+    addToBookshelf: []
     scrollTop: []
     scrollBottom: []
 }>()
@@ -31,6 +33,14 @@ const emit = defineEmits<{
             >
                 <icon-mdi-cog-outline />
                 <span>设置</span>
+            </button>
+            <button
+                v-if="!inBookshelf"
+                class="sidebar-btn"
+                @click="emit('addToBookshelf')"
+            >
+                <span>加入</span>
+                <span>书架</span>
             </button>
             <button
                 class="sidebar-btn"
