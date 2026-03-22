@@ -14,13 +14,17 @@ const emit = defineEmits<{
 }>()
 
 const listRef = ref<HTMLElement>()
+const keyword = ref('')
 
-const currentIndex = computed(() =>
-    props.chapters.findIndex(c => c.chapterId === props.currentChapterId)
-)
+const filteredChapters = computed(() => {
+    const kw = keyword.value.trim()
+    if (!kw) return props.chapters
+    return props.chapters.filter(c => c.title.includes(kw))
+})
 
 watch(visible, async val => {
     if (!val) return
+    keyword.value = ''
     await nextTick()
     const el = listRef.value?.querySelector('.catalog-item.active')
     el?.scrollIntoView({ block: 'center' })
@@ -40,24 +44,44 @@ function handleSelect(chapter: Chapter) {
         append-to-body
         :close-on-click-modal="true"
     >
+        <el-input
+            v-model="keyword"
+            placeholder="搜索章节名称"
+            clearable
+            class="catalog-search"
+        >
+            <template #prefix>
+                <icon-mdi-magnify />
+            </template>
+        </el-input>
+
         <div
             ref="listRef"
             class="catalog-list"
         >
             <button
-                v-for="(chapter, idx) in chapters"
+                v-for="chapter in filteredChapters"
                 :key="chapter.chapterId"
                 class="catalog-item"
-                :class="{ active: idx === currentIndex }"
+                :class="{ active: chapter.chapterId === currentChapterId }"
                 @click="handleSelect(chapter)"
             >
                 <span class="catalog-title">{{ chapter.title }}</span>
             </button>
+            <el-empty
+                v-if="filteredChapters.length === 0"
+                description="无匹配章节"
+                :image-size="80"
+            />
         </div>
     </el-dialog>
 </template>
 
 <style scoped lang="scss">
+.catalog-search {
+    margin-bottom: 12px;
+}
+
 .catalog-list {
     max-height: 60vh;
     overflow-y: auto;
