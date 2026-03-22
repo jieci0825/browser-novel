@@ -23,6 +23,15 @@ export async function isInBookshelf(sourceId: string, bookId: string): Promise<b
     return record != null
 }
 
+/** 更新书架记录的最后阅读时间 */
+export async function updateBookshelfLastReadAt(
+    sourceId: string,
+    bookId: string,
+    lastReadAt: number
+): Promise<void> {
+    await db.bookshelf.update([sourceId, bookId], { lastReadAt })
+}
+
 /** 获取书架列表并关联阅读进度（按最后阅读时间倒序） */
 export async function getBookshelfWithProgress(): Promise<Book[]> {
     const [shelfList, historyList] = await Promise.all([

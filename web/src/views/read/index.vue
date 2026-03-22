@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { bookApi } from '@/api'
 import type { ChapterContent, Chapter } from '@/api/types/book.type'
@@ -9,6 +9,7 @@ import {
 } from '@/database/services/bookshelf-service'
 import { ElMessage } from 'element-plus'
 import { initReadSettings } from './config/read-settings'
+import { useReadProgress } from './composables/use-read-progress'
 import ReadContent from './components/read-content.vue'
 import ReadSidebar from './components/read-sidebar.vue'
 import ReadPagination from './components/read-pagination.vue'
@@ -33,6 +34,14 @@ const settingsVisible = ref(false)
 const catalogVisible = ref(false)
 
 const currentChapterId = computed(() => route.params.chapterId as string)
+
+const { ready, consumeInitialScroll } = useReadProgress({
+    sourceId,
+    bookId,
+    currentChapterId,
+    chapters,
+    inBookshelf,
+})
 
 const currentIndex = computed(() =>
     chapters.value.findIndex(c => c.chapterId === currentChapterId.value)
@@ -88,7 +97,11 @@ async function fetchContent() {
             currentChapterId.value
         )
         content.value = res
-        window.scrollTo({ top: 0 })
+        await ready
+        const scrollTop = consumeInitialScroll(currentChapterId.value)
+        contentLoading.value = false
+        await nextTick()
+        window.scrollTo({ top: scrollTop })
     } catch {
         contentError.value = '获取章节内容失败'
     } finally {
