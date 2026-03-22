@@ -20,15 +20,18 @@ const content = ref<ChapterContent | null>(null)
 const chapters = ref<Chapter[]>([])
 const contentLoading = ref(true)
 const contentError = ref('')
+const sidebarVisible = ref(false)
 
 const currentChapterId = computed(() => route.params.chapterId as string)
 
 const currentIndex = computed(() =>
-    chapters.value.findIndex((c) => c.chapterId === currentChapterId.value)
+    chapters.value.findIndex(c => c.chapterId === currentChapterId.value)
 )
 const hasPrev = computed(() => currentIndex.value > 0)
-const hasNext = computed(() =>
-    currentIndex.value >= 0 && currentIndex.value < chapters.value.length - 1
+const hasNext = computed(
+    () =>
+        currentIndex.value >= 0 &&
+        currentIndex.value < chapters.value.length - 1
 )
 
 onMounted(async () => {
@@ -55,7 +58,11 @@ async function fetchContent() {
         contentLoading.value = true
         contentError.value = ''
         content.value = null
-        const res = await bookApi.getContent(sourceId, bookId, currentChapterId.value)
+        const res = await bookApi.getContent(
+            sourceId,
+            bookId,
+            currentChapterId.value
+        )
         content.value = res
         window.scrollTo({ top: 0 })
     } catch {
@@ -96,6 +103,7 @@ function scrollTo(position: 'top' | 'bottom') {
 <template>
     <div class="read-page">
         <ReadSidebar
+            :visible="sidebarVisible"
             @catalog="handleCatalog"
             @settings="handleSettings"
             @bookshelf="handleBookshelf"
@@ -108,6 +116,7 @@ function scrollTo(position: 'top' | 'bottom') {
             :loading="contentLoading"
             :error="contentError"
             @retry="fetchContent"
+            @click="sidebarVisible = !sidebarVisible"
         />
 
         <ReadPagination

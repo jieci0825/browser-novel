@@ -48,7 +48,9 @@ defineEmits<{
             <h1 class="read-content__title">{{ content.title }}</h1>
             <div class="read-content__text">
                 <p
-                    v-for="(paragraph, index) in content.content.split('\n').filter(Boolean)"
+                    v-for="(paragraph, index) in content.content
+                        .split('\n')
+                        .filter(Boolean)"
                     :key="index"
                 >
                     {{ paragraph }}
@@ -66,6 +68,7 @@ defineEmits<{
     min-height: 80vh;
     background-color: var(--read-content-bg);
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
 
     &__loading {
         padding: 40px 0;

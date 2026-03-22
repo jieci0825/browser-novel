@@ -6,11 +6,36 @@ export interface ReadTheme {
 }
 
 export const READ_THEMES: ReadTheme[] = [
-    { name: '默认', contentBg: '#f1f1f1', pageBg: '#e9e9e9', textColor: '#000000e6' },
-    { name: '羊皮纸', contentBg: '#f5f0e7', pageBg: '#e6e2d6', textColor: '#000000e6' },
-    { name: '护眼黄', contentBg: '#eee2bf', pageBg: '#e2cfa1', textColor: '#000000e6' },
-    { name: '护眼绿', contentBg: '#ddebde', pageBg: '#c7ddc8', textColor: '#000000e6' },
-    { name: '暗黑', contentBg: '#23272f', pageBg: '#16181d', textColor: '#f6f7f9' },
+    {
+        name: '默认',
+        contentBg: '#f1f1f1',
+        pageBg: '#e9e9e9',
+        textColor: '#000000e6',
+    },
+    {
+        name: '羊皮纸',
+        contentBg: '#f5f0e7',
+        pageBg: '#e6e2d6',
+        textColor: '#000000e6',
+    },
+    {
+        name: '护眼黄',
+        contentBg: '#eee2bf',
+        pageBg: '#e2cfa1',
+        textColor: '#000000e6',
+    },
+    {
+        name: '护眼绿',
+        contentBg: '#ddebde',
+        pageBg: '#c7ddc8',
+        textColor: '#000000e6',
+    },
+    {
+        name: '暗黑',
+        contentBg: '#23272f',
+        pageBg: '#16181d',
+        textColor: '#f6f7f9',
+    },
 ]
 
 const STORAGE_KEY = 'read-theme-index'
