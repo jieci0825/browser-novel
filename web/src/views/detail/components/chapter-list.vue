@@ -17,15 +17,26 @@ const emit = defineEmits<{
     <div class="chapter-section">
         <div class="section-title">
             <span>目录</span>
-            <span v-if="chapters.length" class="chapter-count">共 {{ chapters.length }} 章</span>
+            <span
+                v-if="chapters.length"
+                class="chapter-count"
+                >共 {{ chapters.length }} 章</span
+            >
         </div>
 
         <template v-if="loading">
-            <el-skeleton :rows="8" animated style="padding: 16px;" />
+            <el-skeleton
+                :rows="8"
+                animated
+                style="padding: 16px"
+            />
         </template>
 
         <template v-else-if="error">
-            <el-result icon="warning" :title="error">
+            <el-result
+                icon="warning"
+                :title="error"
+            >
                 <template #extra>
                     <el-button @click="emit('retry')">重试</el-button>
                 </template>
@@ -45,7 +56,10 @@ const emit = defineEmits<{
             </div>
         </template>
 
-        <el-empty v-else description="暂无章节" />
+        <el-empty
+            v-else
+            description="暂无章节"
+        />
     </div>
 </template>
 
