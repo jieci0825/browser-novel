@@ -22,7 +22,7 @@ const STORAGE_KEY = 'read-settings'
 
 const DEFAULT_SETTINGS: ReadSettings = {
     themeIndex: getSavedThemeIndex(),
-    fontFamily: FONT_OPTIONS[0].value,
+    fontFamily: FONT_OPTIONS[0]!.value,
     customFont: '',
     fontSize: 17,
     letterSpacing: 0,
@@ -36,7 +36,7 @@ export const SETTING_LIMITS = {
     letterSpacing: { min: 0, max: 0.5, step: 0.01 },
     lineHeight: { min: 1.2, max: 3, step: 0.1 },
     paragraphSpacing: { min: 0, max: 3, step: 0.1 },
-    pageWidth: { min: 400, max: 1200, step: 20 },
+    pageWidth: { min: 420, max: 1200, step: 20 },
 }
 
 function loadSettings(): ReadSettings {
@@ -81,13 +81,4 @@ export function initReadSettings() {
         saveSettings(readSettings)
         applySettingsToDOM()
     })
-}
-
-export function adjustSetting(
-    key: keyof typeof SETTING_LIMITS,
-    direction: 1 | -1
-) {
-    const { min, max, step } = SETTING_LIMITS[key]
-    const raw = readSettings[key] + step * direction
-    readSettings[key] = Math.round(Math.max(min, Math.min(max, raw)) * 100) / 100
 }

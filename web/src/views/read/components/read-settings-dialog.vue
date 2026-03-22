@@ -5,7 +5,6 @@ import {
     readSettings,
     FONT_OPTIONS,
     SETTING_LIMITS,
-    adjustSetting,
 } from '../config/read-settings'
 
 const visible = defineModel<boolean>({ required: true })
@@ -54,7 +53,7 @@ function saveCustomFont() {
                         <icon-mdi-check
                             v-if="readSettings.themeIndex === idx"
                             class="theme-check"
-                            :style="{ color: theme.textColor }"
+                            :style="{ color: 'var(--el-color-danger)' }"
                         />
                     </button>
                 </div>
@@ -87,163 +86,69 @@ function saveCustomFont() {
                     <el-input
                         v-model="customFontInput"
                         placeholder="输入字体名称"
-                        size="small"
                     />
-                    <el-button
-                        size="small"
-                        @click="saveCustomFont"
-                    >
-                        保存
-                    </el-button>
+                    <el-button @click="saveCustomFont"> 保存 </el-button>
                 </div>
             </div>
 
             <!-- 字体大小 -->
             <div class="settings-row">
                 <span class="settings-label">字体大小</span>
-                <div class="stepper">
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.fontSize <= SETTING_LIMITS.fontSize.min
-                        "
-                        @click="adjustSetting('fontSize', -1)"
-                    >
-                        A-
-                    </button>
-                    <span class="stepper-value">{{
-                        readSettings.fontSize
-                    }}</span>
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.fontSize >= SETTING_LIMITS.fontSize.max
-                        "
-                        @click="adjustSetting('fontSize', 1)"
-                    >
-                        A+
-                    </button>
-                </div>
+                <el-input-number
+                    v-model="readSettings.fontSize"
+                    :min="SETTING_LIMITS.fontSize.min"
+                    :max="SETTING_LIMITS.fontSize.max"
+                    :step="SETTING_LIMITS.fontSize.step"
+                    :precision="0"
+                />
             </div>
 
             <!-- 字距 -->
             <div class="settings-row">
                 <span class="settings-label">字距</span>
-                <div class="stepper">
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.letterSpacing <=
-                            SETTING_LIMITS.letterSpacing.min
-                        "
-                        @click="adjustSetting('letterSpacing', -1)"
-                    >
-                        A-
-                    </button>
-                    <span class="stepper-value">{{
-                        readSettings.letterSpacing.toFixed(2)
-                    }}</span>
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.letterSpacing >=
-                            SETTING_LIMITS.letterSpacing.max
-                        "
-                        @click="adjustSetting('letterSpacing', 1)"
-                    >
-                        A+
-                    </button>
-                </div>
+                <el-input-number
+                    v-model="readSettings.letterSpacing"
+                    :min="SETTING_LIMITS.letterSpacing.min"
+                    :max="SETTING_LIMITS.letterSpacing.max"
+                    :step="SETTING_LIMITS.letterSpacing.step"
+                    :precision="2"
+                />
             </div>
 
             <!-- 行距 -->
             <div class="settings-row">
                 <span class="settings-label">行距</span>
-                <div class="stepper">
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.lineHeight <=
-                            SETTING_LIMITS.lineHeight.min
-                        "
-                        @click="adjustSetting('lineHeight', -1)"
-                    >
-                        A-
-                    </button>
-                    <span class="stepper-value">{{
-                        readSettings.lineHeight.toFixed(1)
-                    }}</span>
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.lineHeight >=
-                            SETTING_LIMITS.lineHeight.max
-                        "
-                        @click="adjustSetting('lineHeight', 1)"
-                    >
-                        A+
-                    </button>
-                </div>
+                <el-input-number
+                    v-model="readSettings.lineHeight"
+                    :min="SETTING_LIMITS.lineHeight.min"
+                    :max="SETTING_LIMITS.lineHeight.max"
+                    :step="SETTING_LIMITS.lineHeight.step"
+                    :precision="1"
+                />
             </div>
 
             <!-- 段距 -->
             <div class="settings-row">
                 <span class="settings-label">段距</span>
-                <div class="stepper">
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.paragraphSpacing <=
-                            SETTING_LIMITS.paragraphSpacing.min
-                        "
-                        @click="adjustSetting('paragraphSpacing', -1)"
-                    >
-                        A-
-                    </button>
-                    <span class="stepper-value">{{
-                        readSettings.paragraphSpacing.toFixed(1)
-                    }}</span>
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.paragraphSpacing >=
-                            SETTING_LIMITS.paragraphSpacing.max
-                        "
-                        @click="adjustSetting('paragraphSpacing', 1)"
-                    >
-                        A+
-                    </button>
-                </div>
+                <el-input-number
+                    v-model="readSettings.paragraphSpacing"
+                    :min="SETTING_LIMITS.paragraphSpacing.min"
+                    :max="SETTING_LIMITS.paragraphSpacing.max"
+                    :step="SETTING_LIMITS.paragraphSpacing.step"
+                    :precision="1"
+                />
             </div>
 
             <!-- 页面宽度 -->
             <div class="settings-row">
                 <span class="settings-label">页面宽度</span>
-                <div class="stepper">
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.pageWidth <=
-                            SETTING_LIMITS.pageWidth.min
-                        "
-                        @click="adjustSetting('pageWidth', -1)"
-                    >
-                        -
-                    </button>
-                    <span class="stepper-value">{{
-                        readSettings.pageWidth
-                    }}</span>
-                    <button
-                        class="stepper-btn"
-                        :disabled="
-                            readSettings.pageWidth >=
-                            SETTING_LIMITS.pageWidth.max
-                        "
-                        @click="adjustSetting('pageWidth', 1)"
-                    >
-                        +
-                    </button>
-                </div>
+                <el-input-number
+                    v-model="readSettings.pageWidth"
+                    :min="SETTING_LIMITS.pageWidth.min"
+                    :max="SETTING_LIMITS.pageWidth.max"
+                    :step="SETTING_LIMITS.pageWidth.step"
+                    :precision="0"
+                />
             </div>
         </div>
     </el-dialog>
@@ -280,7 +185,7 @@ function saveCustomFont() {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -288,16 +193,17 @@ function saveCustomFont() {
     transition: border-color 0.2s;
 
     &.active {
-        border-color: #409eff;
+        border-color: var(--el-color-danger);
     }
 
     &:hover {
-        border-color: #a0cfff;
+        border-color: var(--el-color-danger);
     }
 }
 
 .theme-check {
     font-size: 16px;
+    color: var(--el-color-danger);
 }
 
 .font-list {
@@ -316,13 +222,13 @@ function saveCustomFont() {
     transition: all 0.2s;
 
     &.active {
-        border-color: #409eff;
-        color: #409eff;
-        background: #ecf5ff;
+        border-color: var(--el-color-primary);
+        color: var(--el-color-primary);
+        background: var(--el-color-primary-light-9);
     }
 
     &:hover:not(.active) {
-        border-color: #c6e2ff;
+        border-color: var(--el-color-danger);
     }
 }
 
@@ -330,45 +236,5 @@ function saveCustomFont() {
     display: flex;
     gap: 8px;
     flex: 1;
-}
-
-.stepper {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    border: 1px solid #dcdfe6;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.stepper-btn {
-    width: 40px;
-    height: 32px;
-    border: none;
-    background: #f5f7fa;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    color: #606266;
-    transition: background 0.2s;
-
-    &:hover:not(:disabled) {
-        background: #e6e8eb;
-    }
-
-    &:disabled {
-        color: #c0c4cc;
-        cursor: not-allowed;
-    }
-}
-
-.stepper-value {
-    width: 60px;
-    text-align: center;
-    font-size: 13px;
-    color: #303133;
-    border-left: 1px solid #dcdfe6;
-    border-right: 1px solid #dcdfe6;
-    line-height: 32px;
 }
 </style>
