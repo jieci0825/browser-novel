@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { bookApi } from '@/api'
-import type { ChapterContent, Chapter, BookDetail } from '@/api/types/book.type'
+import type { ChapterContent, Chapter } from '@/api/types/book.type'
 import {
     isInBookshelf,
     addToBookshelf,
@@ -25,7 +25,6 @@ const bookId = route.params.bookId as string
 
 const content = ref<ChapterContent | null>(null)
 const chapters = ref<Chapter[]>([])
-const detail = ref<BookDetail | null>(null)
 const inBookshelf = ref(true)
 const contentLoading = ref(true)
 const contentError = ref('')
@@ -57,7 +56,6 @@ onMounted(async () => {
     initReadSettings()
     window.addEventListener('keydown', handleKeydown)
     checkBookshelf()
-    fetchDetail()
     await fetchChapters()
     await fetchContent()
 })
@@ -108,39 +106,31 @@ function goChapter(direction: 'prev' | 'next') {
     })
 }
 
-async function fetchDetail() {
-    try {
-        detail.value = await bookApi.getDetail(sourceId, bookId)
-    } catch {
-        // 详情获取失败不阻塞阅读
-    }
-}
-
 async function checkBookshelf() {
     inBookshelf.value = await isInBookshelf(sourceId, bookId)
 }
 
 async function handleAddToBookshelf() {
-    if (!detail.value) {
-        ElMessage.warning('书籍信息加载中，请稍后再试')
-        return
+    try {
+        const d = await bookApi.getDetail(sourceId, bookId)
+        await addToBookshelf({
+            sourceId: d.sourceId,
+            bookId: d.bookId,
+            sourceName: '',
+            name: d.name,
+            author: d.author,
+            cover: d.cover ?? '',
+            intro: d.intro ?? '',
+            latestChapter: d.latestChapter ?? '',
+            status: d.status ?? '',
+            addedAt: Date.now(),
+            lastReadAt: Date.now(),
+        })
+        inBookshelf.value = true
+        ElMessage.success('已加入书架')
+    } catch {
+        ElMessage.error('加入书架失败，请重试')
     }
-    const d = detail.value
-    await addToBookshelf({
-        sourceId: d.sourceId,
-        bookId: d.bookId,
-        sourceName: '',
-        name: d.name,
-        author: d.author,
-        cover: d.cover ?? '',
-        intro: d.intro ?? '',
-        latestChapter: d.latestChapter ?? '',
-        status: d.status ?? '',
-        addedAt: Date.now(),
-        lastReadAt: Date.now(),
-    })
-    inBookshelf.value = true
-    ElMessage.success('已加入书架')
 }
 
 function handleCatalog() {
