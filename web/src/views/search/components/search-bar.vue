@@ -29,7 +29,7 @@ function handleSearch() {
                 </el-button>
                 <el-input
                     v-model="keyword"
-                    placeholder="搜索书名、作者..."
+                    placeholder="搜索书名、作者...（若是番茄小说，推荐搜索作者名称而非书名）"
                     size="large"
                     clearable
                     @keyup.enter="handleSearch"
