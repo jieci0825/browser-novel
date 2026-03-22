@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { bookApi } from '@/api'
 import type { ChapterContent, Chapter } from '@/api/types/book.type'
@@ -8,6 +8,7 @@ import ReadContent from './components/read-content.vue'
 import ReadSidebar from './components/read-sidebar.vue'
 import ReadPagination from './components/read-pagination.vue'
 import ReadSettingsDialog from './components/read-settings-dialog.vue'
+import ReadCatalogDialog from './components/read-catalog-dialog.vue'
 
 defineOptions({ name: 'ReadPage' })
 
@@ -23,6 +24,7 @@ const contentLoading = ref(true)
 const contentError = ref('')
 const sidebarVisible = ref(false)
 const settingsVisible = ref(false)
+const catalogVisible = ref(false)
 
 const currentChapterId = computed(() => route.params.chapterId as string)
 
@@ -36,10 +38,23 @@ const hasNext = computed(
         currentIndex.value < chapters.value.length - 1
 )
 
+function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'ArrowLeft' && hasPrev.value) {
+        goChapter('prev')
+    } else if (e.key === 'ArrowRight' && hasNext.value) {
+        goChapter('next')
+    }
+}
+
 onMounted(async () => {
     initReadSettings()
+    window.addEventListener('keydown', handleKeydown)
     await fetchChapters()
     await fetchContent()
+})
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown)
 })
 
 watch(currentChapterId, () => {
@@ -85,7 +100,15 @@ function goChapter(direction: 'prev' | 'next') {
 }
 
 function handleCatalog() {
-    router.push({ name: 'detail', params: { sourceId, bookId } })
+    catalogVisible.value = true
+}
+
+function handleCatalogSelect(chapterId: string) {
+    if (chapterId === currentChapterId.value) return
+    router.replace({
+        name: 'read',
+        params: { sourceId, bookId, chapterId },
+    })
 }
 
 function handleBookshelf() {
@@ -126,6 +149,13 @@ function scrollTo(position: 'top' | 'bottom') {
             :has-next="hasNext"
             @prev="goChapter('prev')"
             @next="goChapter('next')"
+        />
+
+        <ReadCatalogDialog
+            v-model="catalogVisible"
+            :chapters="chapters"
+            :current-chapter-id="currentChapterId"
+            @select="handleCatalogSelect"
         />
 
         <ReadSettingsDialog v-model="settingsVisible" />
