@@ -74,7 +74,7 @@ const emit = defineEmits<{
     top: 0;
     left: max(
         0px,
-        calc(50vw - var(--content-max-width) / 2 - var(--sidebar-width))
+        calc(50vw - var(--content-max-width) / 2 - var(--sidebar-width) - 18px)
     );
     display: flex;
     flex-direction: column;
@@ -89,16 +89,16 @@ const emit = defineEmits<{
     justify-content: center;
     width: 48px;
     height: 48px;
-    border: 1px solid var(--color-border-light);
-    border-radius: 6px;
-    background-color: var(--color-bg-navbar);
-    color: var(--color-text-primary);
+    border: 1px solid var(--read-bg);
+    border-radius: 4px;
+    background-color: var(--read-content-bg, var(--color-bg-navbar));
+    color: var(--read-text-color, var(--color-text-primary));
     cursor: pointer;
-    transition: background-color 0.2s;
-    padding: 4px 0;
+    transition: background-color 0.2s, color 0.2s;
+    padding: 4px;
 
     &:hover {
-        background-color: #f0f0f0;
+        filter: brightness(0.92);
     }
 
     svg {

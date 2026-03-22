@@ -82,18 +82,21 @@ defineEmits<{
         font-size: 22px;
         font-weight: 600;
         color: var(--read-text-color);
+        font-family: var(--read-font-family, sans-serif);
         margin-bottom: 32px;
         text-align: center;
     }
 
     &__text {
-        font-size: 17px;
-        line-height: 1.9;
+        font-size: var(--read-font-size, 17px);
+        font-family: var(--read-font-family, sans-serif);
+        line-height: var(--read-line-height, 1.9);
+        letter-spacing: var(--read-letter-spacing, 0);
         color: var(--read-text-color);
 
         p {
             text-indent: 2em;
-            margin-bottom: 16px;
+            margin-bottom: var(--read-paragraph-spacing, 1em);
         }
     }
 }
