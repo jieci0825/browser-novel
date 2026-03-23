@@ -1,7 +1,66 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function goHome() {
+    router.replace({ name: 'bookshelf' })
+}
+</script>
 
 <template>
-    <div class="not-found">404 页面未找到</div>
+    <div class="not-found">
+        <div class="content">
+            <span class="code">404</span>
+            <p class="message">抱歉，你访问的页面不存在</p>
+            <button class="back-btn" @click="goHome">返回首页</button>
+        </div>
+    </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.not-found {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--color-bg);
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 32px;
+    }
+
+    .code {
+        font-size: 72px;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--color-fg);
+        opacity: 0.12;
+    }
+
+    .message {
+        margin-top: 12px;
+        font-size: 15px;
+        color: var(--text-secondary);
+    }
+
+    .back-btn {
+        margin-top: 32px;
+        padding: 10px 32px;
+        font-size: 15px;
+        color: var(--color-bg);
+        background: var(--color-fg);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+
+        &:active {
+            opacity: 0.8;
+        }
+    }
+}
+</style>
