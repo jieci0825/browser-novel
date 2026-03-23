@@ -12,6 +12,7 @@ defineProps<{
 
 const emit = defineEmits<{
     'book-click': [book: Book]
+    'book-long-press': [book: Book]
 }>()
 
 function getBookKey(book: Book) {
@@ -29,6 +30,7 @@ function getBookKey(book: Book) {
             :edit-mode="editMode"
             :selected="selectedKeys.has(getBookKey(book))"
             @click="emit('book-click', book)"
+            @longpress="emit('book-long-press', book)"
         />
     </div>
 </template>
@@ -44,6 +46,10 @@ function getBookKey(book: Book) {
     &--list {
         display: flex;
         flex-direction: column;
+
+        :deep(.book-card--list:first-child) {
+            padding-top: 0;
+        }
     }
 }
 </style>

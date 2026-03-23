@@ -127,6 +127,17 @@ export function useBookshelf() {
         }
     }
 
+    function handleBookLongPress(book: Book) {
+        if (editMode.value) return
+        router.push({
+            name: 'detail',
+            params: {
+                sourceId: book.sourceId,
+                bookId: book.bookId,
+            },
+        })
+    }
+
     function goToSearch() {
         router.push('/search')
     }
@@ -149,6 +160,7 @@ export function useBookshelf() {
         toggleSelectAll,
         deleteSelected,
         handleBookClick,
+        handleBookLongPress,
         goToSearch,
     }
 }

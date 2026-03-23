@@ -20,6 +20,7 @@ const {
     toggleSelectAll,
     deleteSelected,
     handleBookClick,
+    handleBookLongPress,
     goToSearch,
 } = useBookshelf()
 
@@ -52,6 +53,7 @@ const showHelp = ref(false)
                 :edit-mode="editMode"
                 :selected-keys="selectedKeys"
                 @book-click="handleBookClick"
+                @book-long-press="handleBookLongPress"
             />
         </main>
 
