@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import AppButton from '@/components/app-button/index.vue'
 
 const router = useRouter()
 
@@ -13,7 +14,7 @@ function goHome() {
         <div class="content">
             <span class="code">404</span>
             <p class="message">抱歉，你访问的页面不存在</p>
-            <button class="back-btn" @click="goHome">返回首页</button>
+            <AppButton class="back-btn" @click="goHome">返回首页</AppButton>
         </div>
     </div>
 </template>
@@ -52,15 +53,6 @@ function goHome() {
         margin-top: 32px;
         padding: 10px 32px;
         font-size: 15px;
-        color: var(--color-bg);
-        background: var(--color-fg);
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-
-        &:active {
-            opacity: 0.8;
-        }
     }
 }
 </style>
