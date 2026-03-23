@@ -76,7 +76,7 @@ function onCardClick(book: Book) {
 <style scoped lang="scss">
 .book-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 16px;
 }
 </style>

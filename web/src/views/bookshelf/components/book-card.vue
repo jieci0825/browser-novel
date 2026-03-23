@@ -65,26 +65,10 @@ defineEmits<{
     flex-direction: column;
     border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.2s;
 
     &:hover {
-        transform: translateY(-2px);
-
-        .book-cover {
-            img,
-            &__placeholder {
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            }
-        }
-
         .remove-btn {
             opacity: 1;
-        }
-    }
-
-    &.is-managing {
-        &:hover {
-            transform: none;
         }
     }
 
@@ -103,8 +87,6 @@ defineEmits<{
             width: 100%;
             aspect-ratio: 3 / 4;
             border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.2s;
         }
 
         img {
@@ -185,11 +167,11 @@ defineEmits<{
     }
 
     .book-info {
-        padding-top: 8px;
+        padding-top: 6px;
         text-align: center;
 
         .book-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 500;
             margin: 0;
             color: var(--el-text-color-primary);
@@ -199,8 +181,8 @@ defineEmits<{
         }
 
         .book-author {
-            font-size: 12px;
-            margin: 4px 0 0;
+            font-size: 11px;
+            margin: 2px 0 0;
             color: var(--el-text-color-secondary);
             overflow: hidden;
             text-overflow: ellipsis;
