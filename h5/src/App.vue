@@ -1,5 +1,9 @@
 <script setup lang="ts"></script>
 
 <template>
-    <h1>Hello World</h1>
+    <RouterView v-slot="{ Component, route }">
+        <KeepAlive include="SearchPage">
+            <component :is="Component" :key="route.name" />
+        </KeepAlive>
+    </RouterView>
 </template>

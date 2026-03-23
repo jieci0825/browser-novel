@@ -1,3 +1,16 @@
 :root {
-    --color-primary: #171717;
+    /* 颜色基底（Design Token） */
+    --color-bg: #ffffff;
+    --color-fg: #171717;
+    --color-danger: #ef4444;
+
+    /* 📝 文本 */
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-placeholder: #9ca3af;
+
+    /* 🔲 边框 */
+    --border-default: #e5e7eb;
+    --border-hover: #d1d5db;
+    --border-focus: var(--color-fg);
 }
