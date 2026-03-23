@@ -7,6 +7,7 @@ import {
     addToBookshelf,
     removeFromBookshelf,
 } from '@/database/services/bookshelf-service'
+import { getReadProgress, updateReadProgress } from '@/database/services/read-history-service'
 
 export function useDetail() {
     const route = useRoute()
@@ -49,6 +50,9 @@ export function useDetail() {
             inBookshelf.value = false
         } else {
             const d = detail.value
+            const now = Date.now()
+            const firstChapter = chapters.value[0]
+
             await addToBookshelf({
                 sourceId,
                 bookId,
@@ -59,9 +63,28 @@ export function useDetail() {
                 intro: d.intro || '',
                 latestChapter: d.latestChapter || '',
                 status: d.status || '',
-                addedAt: Date.now(),
-                lastReadAt: Date.now(),
+                addedAt: now,
+                lastReadAt: now,
             })
+
+            const hasHistory = await getReadProgress(sourceId, bookId)
+            if (firstChapter && !hasHistory) {
+                await updateReadProgress({
+                    sourceId,
+                    bookId,
+                    name: d.name,
+                    author: d.author,
+                    cover: d.cover || '',
+                    lastReadChapterId: firstChapter.chapterId,
+                    lastReadChapterTitle: firstChapter.title,
+                    lastReadChapterIndex: 0,
+                    totalChapters: chapters.value.length,
+                    readProgress: 0,
+                    scrollPosition: 0,
+                    lastReadAt: now,
+                })
+            }
+
             inBookshelf.value = true
         }
     }
