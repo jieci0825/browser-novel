@@ -10,9 +10,16 @@ defineProps<{
     <div class="book-card">
         <div class="book-cover">
             <img
+                v-if="book.cover"
                 :src="book.cover"
                 :alt="book.name"
             />
+            <div
+                v-else
+                class="book-cover__placeholder"
+            >
+                暂无封面
+            </div>
             <div
                 v-if="book.readProgress != null"
                 class="book-progress"
@@ -43,7 +50,8 @@ defineProps<{
     &:hover {
         transform: translateY(-2px);
 
-        .book-cover img {
+        .book-cover img,
+        .book-cover__placeholder {
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         }
     }
@@ -52,13 +60,28 @@ defineProps<{
 .book-cover {
     position: relative;
 
-    img {
+    img,
+    &__placeholder {
         width: 100%;
         aspect-ratio: 3 / 4;
-        object-fit: cover;
         border-radius: 6px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transition: box-shadow 0.2s;
+    }
+
+    img {
+        object-fit: cover;
+    }
+
+    &__placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--el-fill-color-light);
+        color: var(--el-text-color-secondary);
+        font-size: 14px;
+        writing-mode: vertical-rl;
+        letter-spacing: 4px;
     }
 
     .book-progress {
