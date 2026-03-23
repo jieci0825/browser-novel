@@ -2,6 +2,19 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+defineProps<{
+    isManaging: boolean
+    selectedCount: number
+    isAllSelected: boolean
+    hasBooks: boolean
+}>()
+
+defineEmits<{
+    startManage: []
+    cancelManage: []
+    toggleSelectAll: []
+}>()
+
 const router = useRouter()
 const showNotice = ref(false)
 
@@ -14,22 +27,35 @@ function goToSearch() {
     <header class="navbar">
         <div class="navbar-inner">
             <div class="navbar-left">
-                <h1 class="navbar-title">书架</h1>
+                <span v-if="isManaging" class="selected-info">已选 {{ selectedCount }} 本</span>
+                <h1 v-else class="navbar-title">书架</h1>
             </div>
             <div class="navbar-right">
-                <el-tooltip content="搜索" placement="bottom">
-                    <button class="icon-btn" @click="goToSearch">
-                        <icon-mdi-magnify />
+                <template v-if="isManaging">
+                    <button class="text-btn" @click="$emit('toggleSelectAll')">
+                        {{ isAllSelected ? '取消全选' : '全选' }}
                     </button>
-                </el-tooltip>
-                <el-tooltip
-                    content="帮助"
-                    placement="bottom"
-                >
-                    <button class="icon-btn" @click="showNotice = true">
-                        <icon-mdi-help-circle-outline />
+                    <button class="text-btn cancel-btn" @click="$emit('cancelManage')">
+                        取消
                     </button>
-                </el-tooltip>
+                </template>
+                <template v-else>
+                    <el-tooltip content="搜索" placement="bottom">
+                        <button class="icon-btn" @click="goToSearch">
+                            <icon-mdi-magnify />
+                        </button>
+                    </el-tooltip>
+                    <el-tooltip content="帮助" placement="bottom">
+                        <button class="icon-btn" @click="showNotice = true">
+                            <icon-mdi-help-circle-outline />
+                        </button>
+                    </el-tooltip>
+                    <el-tooltip v-if="hasBooks" content="管理" placement="bottom">
+                        <button class="icon-btn" @click="$emit('startManage')">
+                            <icon-mdi-playlist-edit />
+                        </button>
+                    </el-tooltip>
+                </template>
             </div>
         </div>
     </header>
@@ -96,6 +122,12 @@ function goToSearch() {
         color: var(--el-text-color-primary);
     }
 
+    .selected-info {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+    }
+
     .navbar-right {
         display: flex;
         align-items: center;
@@ -119,6 +151,30 @@ function goToSearch() {
         &:hover {
             background-color: var(--el-fill-color-light);
             color: var(--el-text-color-primary);
+        }
+    }
+
+    .text-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--el-text-color-regular);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background-color: var(--el-fill-color-light);
+            color: var(--el-text-color-primary);
+        }
+
+        &.cancel-btn {
+            color: var(--el-color-primary);
+
+            &:hover {
+                background-color: var(--el-color-primary-light-9);
+            }
         }
     }
 }

@@ -5,8 +5,15 @@ import { ElMessage } from 'element-plus'
 import type { Book } from '../book'
 import BookCard from './book-card.vue'
 
-defineProps<{
+const props = defineProps<{
     books: Book[]
+    isManaging: boolean
+    selectedKeys: Set<string>
+}>()
+
+const emit = defineEmits<{
+    select: [book: Book]
+    remove: [book: Book]
 }>()
 
 const router = useRouter()
@@ -42,6 +49,14 @@ async function handleBookClick(book: Book) {
         ElMessage.error('获取章节失败，请重试')
     }
 }
+
+function onCardClick(book: Book) {
+    if (props.isManaging) {
+        emit('select', book)
+        return
+    }
+    handleBookClick(book)
+}
 </script>
 
 <template>
@@ -50,7 +65,10 @@ async function handleBookClick(book: Book) {
             v-for="book in books"
             :key="`${book.sourceId}-${book.bookId}`"
             :book="book"
-            @click="handleBookClick(book)"
+            :is-managing="isManaging"
+            :is-selected="selectedKeys.has(`${book.sourceId}-${book.bookId}`)"
+            @click="onCardClick(book)"
+            @remove="emit('remove', book)"
         />
     </div>
 </template>

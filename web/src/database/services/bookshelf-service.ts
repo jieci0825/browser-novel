@@ -12,6 +12,11 @@ export async function removeFromBookshelf(sourceId: string, bookId: string): Pro
     await db.bookshelf.delete([sourceId, bookId])
 }
 
+/** 批量移出书架 */
+export async function batchRemoveFromBookshelf(keys: [string, string][]): Promise<void> {
+    await db.bookshelf.bulkDelete(keys)
+}
+
 /** 获取书架列表（按加入时间倒序） */
 export async function getBookshelfList(): Promise<BookshelfRecord[]> {
     return db.bookshelf.orderBy('addedAt').reverse().toArray()
