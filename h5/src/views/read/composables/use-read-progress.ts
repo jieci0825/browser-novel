@@ -7,6 +7,7 @@ import {
     getReadProgress,
 } from '@/database/services/read-history-service'
 import { updateBookshelfLastReadAt } from '@/database/services/bookshelf-service'
+import { readSettings } from '../config/read-settings'
 
 interface UseReadProgressOptions {
     sourceId: string
@@ -29,6 +30,7 @@ export function useReadProgress(options: UseReadProgressOptions) {
     let bookInfo: BookInfo | null = null
     let scrollTimer: ReturnType<typeof setTimeout> | null = null
     let initialRecord: ReadHistoryRecord | null = null
+    let _pageIndex = 0
 
     const SCROLL_DEBOUNCE_MS = 500
 
@@ -82,6 +84,10 @@ export function useReadProgress(options: UseReadProgressOptions) {
         if (!chapter) return null
 
         const total = chapterList.length
+        const scrollPosition =
+            readSettings.readMode === 'paginated'
+                ? _pageIndex
+                : window.scrollY
 
         return {
             sourceId,
@@ -93,7 +99,7 @@ export function useReadProgress(options: UseReadProgressOptions) {
             totalChapters: total,
             readProgress:
                 total > 0 ? Math.round(((idx + 1) / total) * 10000) / 100 : 0,
-            scrollPosition: window.scrollY,
+            scrollPosition,
             lastReadAt: Date.now(),
         }
     }
@@ -109,24 +115,50 @@ export function useReadProgress(options: UseReadProgressOptions) {
         }
     }
 
+    /** 翻页模式下由 PagedReader 主动调用，更新页码并保存进度 */
+    function savePagedProgress(pageIndex: number) {
+        _pageIndex = pageIndex
+        saveProgress()
+    }
+
     function handleScroll() {
         if (scrollTimer) clearTimeout(scrollTimer)
         scrollTimer = setTimeout(saveProgress, SCROLL_DEBOUNCE_MS)
     }
 
+    function addScrollListener() {
+        window.addEventListener('scroll', handleScroll, { passive: true })
+    }
+
+    function removeScrollListener() {
+        if (scrollTimer) clearTimeout(scrollTimer)
+        window.removeEventListener('scroll', handleScroll)
+    }
+
     watch(currentChapterId, () => {
-        saveProgress()
+        if (readSettings.readMode === 'scroll') {
+            saveProgress()
+        }
     })
 
+    watch(
+        () => readSettings.readMode,
+        (mode, oldMode) => {
+            if (oldMode === 'scroll') removeScrollListener()
+            if (mode === 'scroll') addScrollListener()
+        }
+    )
+
     onMounted(() => {
-        window.addEventListener('scroll', handleScroll, { passive: true })
+        if (readSettings.readMode === 'scroll') {
+            addScrollListener()
+        }
     })
 
     onUnmounted(() => {
-        if (scrollTimer) clearTimeout(scrollTimer)
-        window.removeEventListener('scroll', handleScroll)
+        removeScrollListener()
         saveProgress()
     })
 
-    return { saveProgress, ready, consumeInitialScroll }
+    return { saveProgress, savePagedProgress, ready, consumeInitialScroll }
 }

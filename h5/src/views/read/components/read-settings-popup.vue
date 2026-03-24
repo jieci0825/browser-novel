@@ -5,6 +5,10 @@ import {
     readSettings,
     FONT_OPTIONS,
     SETTING_LIMITS,
+    READ_MODE_OPTIONS,
+    PAGE_ANIMATION_OPTIONS,
+    type ReadMode,
+    type PageAnimation,
 } from '../config/read-settings'
 
 const visible = defineModel<boolean>({ required: true })
@@ -39,6 +43,14 @@ function adjustSetting(
     const raw = readSettings[key] + delta
     const precision = key === 'fontSize' ? 0 : key === 'letterSpacing' ? 2 : 1
     readSettings[key] = Number(clamp(raw, limit.min, limit.max).toFixed(precision))
+}
+
+function selectReadMode(mode: ReadMode) {
+    readSettings.readMode = mode
+}
+
+function selectPageAnimation(anim: PageAnimation) {
+    readSettings.pageAnimation = anim
 }
 
 function handleMaskClick() {
@@ -141,6 +153,36 @@ function handleMaskClick() {
                             <button class="stepper__btn" :disabled="readSettings.paragraphSpacing <= SETTING_LIMITS.paragraphSpacing.min" @click="adjustSetting('paragraphSpacing', -SETTING_LIMITS.paragraphSpacing.step)">−</button>
                             <span class="stepper__value">{{ readSettings.paragraphSpacing.toFixed(1) }}em</span>
                             <button class="stepper__btn" :disabled="readSettings.paragraphSpacing >= SETTING_LIMITS.paragraphSpacing.max" @click="adjustSetting('paragraphSpacing', SETTING_LIMITS.paragraphSpacing.step)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-section">
+                        <span class="setting-label">阅读模式</span>
+                        <div class="toggle-group">
+                            <button
+                                v-for="opt in READ_MODE_OPTIONS"
+                                :key="opt.value"
+                                class="toggle-btn"
+                                :class="{ 'toggle-btn--active': readSettings.readMode === opt.value }"
+                                @click="selectReadMode(opt.value)"
+                            >
+                                {{ opt.label }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-if="readSettings.readMode === 'paginated'" class="setting-section">
+                        <span class="setting-label">翻页动画</span>
+                        <div class="toggle-group">
+                            <button
+                                v-for="opt in PAGE_ANIMATION_OPTIONS"
+                                :key="opt.value"
+                                class="toggle-btn"
+                                :class="{ 'toggle-btn--active': readSettings.pageAnimation === opt.value }"
+                                @click="selectPageAnimation(opt.value)"
+                            >
+                                {{ opt.label }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -357,6 +399,33 @@ function handleMaskClick() {
         font-size: 14px;
         color: var(--text-primary);
         font-variant-numeric: tabular-nums;
+    }
+}
+
+.toggle-group {
+    display: flex;
+    gap: 8px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-primary);
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s;
+
+    &--active {
+        border-color: var(--color-danger);
+        color: var(--color-danger);
+    }
+
+    &:active:not(.toggle-btn--active) {
+        background-color: rgba(0, 0, 0, 0.04);
     }
 }
 

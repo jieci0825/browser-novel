@@ -1,6 +1,9 @@
 import { reactive, watch } from 'vue'
 import { applyTheme, getSavedThemeIndex } from './read-theme'
 
+export type ReadMode = 'scroll' | 'paginated'
+export type PageAnimation = 'none' | 'slide' | 'cover' | 'curl'
+
 export interface ReadSettings {
     themeIndex: number
     fontFamily: string
@@ -9,6 +12,8 @@ export interface ReadSettings {
     letterSpacing: number
     lineHeight: number
     paragraphSpacing: number
+    readMode: ReadMode
+    pageAnimation: PageAnimation
 }
 
 export const FONT_OPTIONS = [
@@ -19,6 +24,19 @@ export const FONT_OPTIONS = [
 
 const STORAGE_KEY = 'read-settings'
 
+export const READ_MODE_OPTIONS: { label: string; value: ReadMode }[] = [
+    { label: '翻页', value: 'paginated' },
+    { label: '滚动', value: 'scroll' },
+]
+
+export const PAGE_ANIMATION_OPTIONS: { label: string; value: PageAnimation }[] =
+    [
+        { label: '无', value: 'none' },
+        { label: '滑动', value: 'slide' },
+        { label: '覆盖', value: 'cover' },
+        { label: '仿真', value: 'curl' },
+    ]
+
 const DEFAULT_SETTINGS: ReadSettings = {
     themeIndex: getSavedThemeIndex(),
     fontFamily: FONT_OPTIONS[0]!.value,
@@ -27,6 +45,8 @@ const DEFAULT_SETTINGS: ReadSettings = {
     letterSpacing: 0,
     lineHeight: 1.9,
     paragraphSpacing: 1,
+    readMode: 'paginated',
+    pageAnimation: 'slide',
 }
 
 export const SETTING_LIMITS = {
