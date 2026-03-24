@@ -5,10 +5,6 @@ import {
     readSettings,
     FONT_OPTIONS,
     SETTING_LIMITS,
-    READ_MODE_OPTIONS,
-    PAGE_ANIMATION_OPTIONS,
-    type ReadMode,
-    type PageAnimation,
 } from '../config/read-settings'
 
 const visible = defineModel<boolean>({ required: true })
@@ -42,15 +38,9 @@ function adjustSetting(
     const limit = SETTING_LIMITS[key]
     const raw = readSettings[key] + delta
     const precision = key === 'fontSize' ? 0 : key === 'letterSpacing' ? 2 : 1
-    readSettings[key] = Number(clamp(raw, limit.min, limit.max).toFixed(precision))
-}
-
-function selectReadMode(mode: ReadMode) {
-    readSettings.readMode = mode
-}
-
-function selectPageAnimation(anim: PageAnimation) {
-    readSettings.pageAnimation = anim
+    readSettings[key] = Number(
+        clamp(raw, limit.min, limit.max).toFixed(precision)
+    )
 }
 
 function handleMaskClick() {
@@ -60,13 +50,30 @@ function handleMaskClick() {
 
 <template>
     <Transition name="popup">
-        <div v-if="visible" class="settings-popup" @click="handleMaskClick">
-            <div class="settings-popup__panel" @click.stop>
+        <div
+            v-if="visible"
+            class="settings-popup"
+            @click="handleMaskClick"
+        >
+            <div
+                class="settings-popup__panel"
+                @click.stop
+            >
                 <div class="settings-popup__header">
                     <span class="settings-popup__title">阅读设置</span>
-                    <button class="settings-popup__close" @click="visible = false">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                    <button
+                        class="settings-popup__close"
+                        @click="visible = false"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                            />
                         </svg>
                     </button>
                 </div>
@@ -79,12 +86,23 @@ function handleMaskClick() {
                                 v-for="(theme, idx) in READ_THEMES"
                                 :key="idx"
                                 class="theme-dot"
-                                :class="{ 'theme-dot--active': readSettings.themeIndex === idx }"
+                                :class="{
+                                    'theme-dot--active':
+                                        readSettings.themeIndex === idx,
+                                }"
                                 :style="{ backgroundColor: theme.contentBg }"
                                 @click="selectTheme(idx)"
                             >
-                                <svg v-if="readSettings.themeIndex === idx" viewBox="0 0 24 24" width="16" height="16" fill="var(--color-danger)">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                <svg
+                                    v-if="readSettings.themeIndex === idx"
+                                    viewBox="0 0 24 24"
+                                    width="16"
+                                    height="16"
+                                    fill="var(--color-danger)"
+                                >
+                                    <path
+                                        d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                    />
                                 </svg>
                             </button>
                         </div>
@@ -97,7 +115,11 @@ function handleMaskClick() {
                                 v-for="opt in FONT_OPTIONS"
                                 :key="opt.value"
                                 class="font-btn"
-                                :class="{ 'font-btn--active': !readSettings.customFont && readSettings.fontFamily === opt.value }"
+                                :class="{
+                                    'font-btn--active':
+                                        !readSettings.customFont &&
+                                        readSettings.fontFamily === opt.value,
+                                }"
                                 @click="selectFont(opt.value)"
                             >
                                 {{ opt.label }}
@@ -114,7 +136,10 @@ function handleMaskClick() {
                                 placeholder="输入字体名称"
                                 class="custom-font-input"
                             />
-                            <button class="custom-font-save" @click="saveCustomFont">
+                            <button
+                                class="custom-font-save"
+                                @click="saveCustomFont"
+                            >
                                 保存
                             </button>
                         </div>
@@ -123,65 +148,159 @@ function handleMaskClick() {
                     <div class="setting-section">
                         <span class="setting-label">字体大小</span>
                         <div class="stepper">
-                            <button class="stepper__btn" :disabled="readSettings.fontSize <= SETTING_LIMITS.fontSize.min" @click="adjustSetting('fontSize', -SETTING_LIMITS.fontSize.step)">−</button>
-                            <span class="stepper__value">{{ readSettings.fontSize }}px</span>
-                            <button class="stepper__btn" :disabled="readSettings.fontSize >= SETTING_LIMITS.fontSize.max" @click="adjustSetting('fontSize', SETTING_LIMITS.fontSize.step)">+</button>
+                            <button
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.fontSize <=
+                                    SETTING_LIMITS.fontSize.min
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'fontSize',
+                                        -SETTING_LIMITS.fontSize.step
+                                    )
+                                "
+                            >
+                                −
+                            </button>
+                            <span class="stepper__value"
+                                >{{ readSettings.fontSize }}px</span
+                            >
+                            <button
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.fontSize >=
+                                    SETTING_LIMITS.fontSize.max
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'fontSize',
+                                        SETTING_LIMITS.fontSize.step
+                                    )
+                                "
+                            >
+                                +
+                            </button>
                         </div>
                     </div>
 
                     <div class="setting-section">
                         <span class="setting-label">字距</span>
                         <div class="stepper">
-                            <button class="stepper__btn" :disabled="readSettings.letterSpacing <= SETTING_LIMITS.letterSpacing.min" @click="adjustSetting('letterSpacing', -SETTING_LIMITS.letterSpacing.step)">−</button>
-                            <span class="stepper__value">{{ readSettings.letterSpacing.toFixed(2) }}em</span>
-                            <button class="stepper__btn" :disabled="readSettings.letterSpacing >= SETTING_LIMITS.letterSpacing.max" @click="adjustSetting('letterSpacing', SETTING_LIMITS.letterSpacing.step)">+</button>
+                            <button
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.letterSpacing <=
+                                    SETTING_LIMITS.letterSpacing.min
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'letterSpacing',
+                                        -SETTING_LIMITS.letterSpacing.step
+                                    )
+                                "
+                            >
+                                −
+                            </button>
+                            <span class="stepper__value"
+                                >{{
+                                    readSettings.letterSpacing.toFixed(2)
+                                }}em</span
+                            >
+                            <button
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.letterSpacing >=
+                                    SETTING_LIMITS.letterSpacing.max
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'letterSpacing',
+                                        SETTING_LIMITS.letterSpacing.step
+                                    )
+                                "
+                            >
+                                +
+                            </button>
                         </div>
                     </div>
 
                     <div class="setting-section">
                         <span class="setting-label">行距</span>
                         <div class="stepper">
-                            <button class="stepper__btn" :disabled="readSettings.lineHeight <= SETTING_LIMITS.lineHeight.min" @click="adjustSetting('lineHeight', -SETTING_LIMITS.lineHeight.step)">−</button>
-                            <span class="stepper__value">{{ readSettings.lineHeight.toFixed(1) }}</span>
-                            <button class="stepper__btn" :disabled="readSettings.lineHeight >= SETTING_LIMITS.lineHeight.max" @click="adjustSetting('lineHeight', SETTING_LIMITS.lineHeight.step)">+</button>
+                            <button
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.lineHeight <=
+                                    SETTING_LIMITS.lineHeight.min
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'lineHeight',
+                                        -SETTING_LIMITS.lineHeight.step
+                                    )
+                                "
+                            >
+                                −
+                            </button>
+                            <span class="stepper__value">{{
+                                readSettings.lineHeight.toFixed(1)
+                            }}</span>
+                            <button
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.lineHeight >=
+                                    SETTING_LIMITS.lineHeight.max
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'lineHeight',
+                                        SETTING_LIMITS.lineHeight.step
+                                    )
+                                "
+                            >
+                                +
+                            </button>
                         </div>
                     </div>
 
                     <div class="setting-section">
                         <span class="setting-label">段距</span>
                         <div class="stepper">
-                            <button class="stepper__btn" :disabled="readSettings.paragraphSpacing <= SETTING_LIMITS.paragraphSpacing.min" @click="adjustSetting('paragraphSpacing', -SETTING_LIMITS.paragraphSpacing.step)">−</button>
-                            <span class="stepper__value">{{ readSettings.paragraphSpacing.toFixed(1) }}em</span>
-                            <button class="stepper__btn" :disabled="readSettings.paragraphSpacing >= SETTING_LIMITS.paragraphSpacing.max" @click="adjustSetting('paragraphSpacing', SETTING_LIMITS.paragraphSpacing.step)">+</button>
-                        </div>
-                    </div>
-
-                    <div class="setting-section">
-                        <span class="setting-label">阅读模式</span>
-                        <div class="toggle-group">
                             <button
-                                v-for="opt in READ_MODE_OPTIONS"
-                                :key="opt.value"
-                                class="toggle-btn"
-                                :class="{ 'toggle-btn--active': readSettings.readMode === opt.value }"
-                                @click="selectReadMode(opt.value)"
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.paragraphSpacing <=
+                                    SETTING_LIMITS.paragraphSpacing.min
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'paragraphSpacing',
+                                        -SETTING_LIMITS.paragraphSpacing.step
+                                    )
+                                "
                             >
-                                {{ opt.label }}
+                                −
                             </button>
-                        </div>
-                    </div>
-
-                    <div v-if="readSettings.readMode === 'paginated'" class="setting-section">
-                        <span class="setting-label">翻页动画</span>
-                        <div class="toggle-group">
-                            <button
-                                v-for="opt in PAGE_ANIMATION_OPTIONS"
-                                :key="opt.value"
-                                class="toggle-btn"
-                                :class="{ 'toggle-btn--active': readSettings.pageAnimation === opt.value }"
-                                @click="selectPageAnimation(opt.value)"
+                            <span class="stepper__value"
+                                >{{
+                                    readSettings.paragraphSpacing.toFixed(1)
+                                }}em</span
                             >
-                                {{ opt.label }}
+                            <button
+                                class="stepper__btn"
+                                :disabled="
+                                    readSettings.paragraphSpacing >=
+                                    SETTING_LIMITS.paragraphSpacing.max
+                                "
+                                @click="
+                                    adjustSetting(
+                                        'paragraphSpacing',
+                                        SETTING_LIMITS.paragraphSpacing.step
+                                    )
+                                "
+                            >
+                                +
                             </button>
                         </div>
                     </div>
@@ -399,33 +518,6 @@ function handleMaskClick() {
         font-size: 14px;
         color: var(--text-primary);
         font-variant-numeric: tabular-nums;
-    }
-}
-
-.toggle-group {
-    display: flex;
-    gap: 8px;
-}
-
-.toggle-btn {
-    flex: 1;
-    padding: 8px 0;
-    border: 1px solid var(--border-default);
-    border-radius: 6px;
-    background: transparent;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--text-primary);
-    -webkit-tap-highlight-color: transparent;
-    transition: all 0.2s;
-
-    &--active {
-        border-color: var(--color-danger);
-        color: var(--color-danger);
-    }
-
-    &:active:not(.toggle-btn--active) {
-        background-color: rgba(0, 0, 0, 0.04);
     }
 }
 
