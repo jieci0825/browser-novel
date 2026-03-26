@@ -9,6 +9,7 @@ import {
 } from '@/database/services/bookshelf-service'
 import { initReadSettings } from './config/read-settings'
 import { useReadProgress } from './composables/use-read-progress'
+import { usePagination } from './composables/use-pagination'
 import ReadContent from './components/read-content.vue'
 import ReadToolbar from './components/read-toolbar.vue'
 import ReadCatalogPopup from './components/read-catalog-popup.vue'
@@ -41,6 +42,8 @@ const { ready, consumeInitialScroll } = useReadProgress({
     inBookshelf,
 })
 
+usePagination('#read-content')
+
 const currentIndex = computed(() =>
     chapters.value.findIndex(c => c.chapterId === currentChapterId.value)
 )
@@ -61,6 +64,7 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMounted(async () => {
     initReadSettings()
+
     window.addEventListener('keydown', handleKeydown)
     checkBookshelf()
     await fetchChapters()
@@ -178,13 +182,26 @@ function scrollTo(position: 'top' | 'bottom') {
 
 <template>
     <div class="read-page">
-        <ReadContent
-            :content="content"
-            :loading="contentLoading"
-            :error="contentError"
-            @retry="fetchContent"
-            @click="handleContentClick"
-        />
+        <div class="read-page-content-wrapper">
+            <ReadContent
+                :content="content"
+                :loading="contentLoading"
+                :error="contentError"
+                @retry="fetchContent"
+                @click="handleContentClick"
+            />
+        </div>
+
+        <div
+            style="
+                width: 100%;
+                height: 35px;
+                background-color: saddlebrown;
+                flex-shrink: 0;
+            "
+        >
+            状态栏占位
+        </div>
 
         <ReadToolbar
             :visible="toolbarVisible"
@@ -214,8 +231,15 @@ function scrollTo(position: 'top' | 'bottom') {
 
 <style scoped lang="scss">
 .read-page {
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100dvh;
     background-color: var(--read-content-bg, #f1f1f1);
+    display: flex;
+    flex-direction: column;
+
+    &-content-wrapper {
+        flex: 1;
+        overflow: hidden;
+        padding: 15px;
+    }
 }
 </style>

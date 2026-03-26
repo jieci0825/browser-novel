@@ -1,5 +1,6 @@
 import { reactive, watch } from 'vue'
 import { applyTheme, getSavedThemeIndex } from './read-theme'
+import type { ReadMode, AnimationType } from '../types/reader'
 
 export interface ReadSettings {
     themeIndex: number
@@ -9,6 +10,8 @@ export interface ReadSettings {
     letterSpacing: number
     lineHeight: number
     paragraphSpacing: number
+    readMode: ReadMode
+    animationType: AnimationType
 }
 
 export const FONT_OPTIONS = [
@@ -27,6 +30,8 @@ const DEFAULT_SETTINGS: ReadSettings = {
     letterSpacing: 0,
     lineHeight: 1.9,
     paragraphSpacing: 1,
+    readMode: 'paginated',
+    animationType: 'slide',
 }
 
 export const SETTING_LIMITS = {
