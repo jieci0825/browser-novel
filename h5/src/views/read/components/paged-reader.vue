@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import type { ChapterContent } from '@/api/types/book.type'
+import type { Chapter, ChapterContent } from '@/api/types/book.type'
 import type { Page, ParagraphSlice, FlipDirection } from '../types/reader'
 import { readSettings } from '../config/read-settings'
 import {
@@ -8,6 +8,7 @@ import {
     locatePositionBeforePaginate,
     resolvePageAfterPaginate,
 } from '../composables/use-pagination'
+import { useChapterPreloader } from '../composables/use-chapter-preloader'
 import { usePageGesture } from '../composables/use-page-gesture'
 import { usePageAnimation } from '../composables/use-page-animation'
 
@@ -16,7 +17,7 @@ const props = withDefaults(
         sourceId: string
         bookId: string
         chapterId: string
-        content: ChapterContent | null
+        chapters: Chapter[]
         startPage?: 'first' | 'last'
     }>(),
     { startPage: 'first' }
@@ -24,7 +25,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
     'toggle-toolbar': []
-    'boundary': [direction: 'prev' | 'next']
+    'chapter-change': [chapterId: string]
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -41,18 +42,77 @@ const {
 const { isAnimating, startAnimation, updateAnimation, finishAnimation } =
     usePageAnimation()
 
+const { loadChapter, preloadAdjacentChapters, getChapter } =
+    useChapterPreloader(props.sourceId, props.bookId)
+
+// ---- 章节状态 ----
+
+const activeChapterId = ref(props.chapterId)
+const activeContent = ref<ChapterContent | null>(null)
+const chapterLoading = ref(false)
+const chapterError = ref('')
+const toastMessage = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+let loadVersion = 0
+let pendingLoadTarget = {
+    chapterId: props.chapterId,
+    startPage: props.startPage,
+}
+
+// ---- 分页状态 ----
+
 const pages = ref<Page[]>([])
 const currentPageIndex = ref(0)
 
+// ---- 章节位置 ----
+
+const chapterIndex = computed(() =>
+    props.chapters.findIndex(c => c.chapterId === activeChapterId.value)
+)
+
+// ---- 段落解析 ----
+
 const paragraphs = computed(() => {
-    if (!props.content) return []
-    const lines = props.content.content.split('\n').filter(Boolean)
-    return [props.content.title, ...lines]
+    if (!activeContent.value) return []
+    const lines = activeContent.value.content.split('\n').filter(Boolean)
+    return [activeContent.value.title, ...lines]
 })
 
+// ---- 页面计算 ----
+
+/** 同步获取相邻章节的边界页（下一章第一页 / 上一章最后一页），缓存未命中时返回 null */
+function getAdjacentBoundaryPage(direction: 'prev' | 'next'): Page | null {
+    const idx = chapterIndex.value + (direction === 'prev' ? -1 : 1)
+    const chapter = props.chapters[idx]
+    if (!chapter) return null
+
+    const cached = getChapter(chapter.chapterId)
+    if (!cached) return null
+
+    const paras = [
+        cached.content.title,
+        ...cached.content.content.split('\n').filter(Boolean),
+    ]
+    const result = paginateWithCache(
+        props.sourceId,
+        props.bookId,
+        chapter.chapterId,
+        paras,
+        getPageHeight(),
+        0
+    )
+    if (result.pages.length === 0) return null
+
+    return direction === 'next'
+        ? result.pages[0]!
+        : result.pages[result.pages.length - 1]!
+}
+
 const prevPage = computed<Page | null>(() => {
-    if (currentPageIndex.value <= 0) return null
-    return pages.value[currentPageIndex.value - 1] ?? null
+    if (currentPageIndex.value > 0) {
+        return pages.value[currentPageIndex.value - 1] ?? null
+    }
+    return getAdjacentBoundaryPage('prev')
 })
 
 const currentPage = computed<Page | null>(() => {
@@ -60,8 +120,10 @@ const currentPage = computed<Page | null>(() => {
 })
 
 const nextPage = computed<Page | null>(() => {
-    if (currentPageIndex.value >= pages.value.length - 1) return null
-    return pages.value[currentPageIndex.value + 1] ?? null
+    if (currentPageIndex.value < pages.value.length - 1) {
+        return pages.value[currentPageIndex.value + 1] ?? null
+    }
+    return getAdjacentBoundaryPage('next')
 })
 
 function executePagination() {
@@ -71,7 +133,7 @@ function executePagination() {
     return paginateWithCache(
         props.sourceId,
         props.bookId,
-        props.chapterId,
+        activeChapterId.value,
         paragraphs.value,
         getPageHeight(),
         0
@@ -87,20 +149,116 @@ function repaginateWithPositionKeep() {
     currentPageIndex.value = resolvePageAfterPaginate(pos, result.pages)
 }
 
-watch(
-    () => props.content,
-    () => {
-        if (!props.content) {
-            pages.value = []
-            currentPageIndex.value = 0
-            return
-        }
+// ---- Toast ----
+
+function showToast(message: string, duration = 1500) {
+    toastMessage.value = message
+    if (toastTimer) clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => {
+        toastMessage.value = ''
+        toastTimer = null
+    }, duration)
+}
+
+// ---- 章节加载 ----
+
+/** 加载指定章节并执行分页，通过版本号丢弃过期请求的结果 */
+async function loadAndApplyChapter(
+    chapterId: string,
+    startPage: 'first' | 'last'
+): Promise<boolean> {
+    const version = ++loadVersion
+    pendingLoadTarget = { chapterId, startPage }
+    chapterLoading.value = true
+    chapterError.value = ''
+
+    try {
+        const content = await loadChapter(chapterId)
+        if (version !== loadVersion) return false
+
+        activeChapterId.value = chapterId
+        activeContent.value = content
+
         const result = executePagination()
         pages.value = result.pages
         currentPageIndex.value =
-            props.startPage === 'last' ? Math.max(result.pages.length - 1, 0) : 0
+            startPage === 'last'
+                ? Math.max(result.pages.length - 1, 0)
+                : 0
+
+        preloadAdjacentChapters(chapterId, props.chapters)
+        return true
+    } catch {
+        if (version !== loadVersion) return false
+        chapterError.value = '章节加载失败'
+        return false
+    } finally {
+        if (version === loadVersion) {
+            chapterLoading.value = false
+        }
+    }
+}
+
+// ---- 跨章翻页 ----
+
+/** 同步应用已缓存的章节数据（跨章动画完成后调用，避免异步间隙导致的遮罩闪烁） */
+function applyCachedChapter(chapterId: string, startPage: 'first' | 'last'): boolean {
+    const cached = getChapter(chapterId)
+    if (!cached) return false
+
+    ++loadVersion
+    activeChapterId.value = chapterId
+    activeContent.value = cached.content
+
+    const result = executePagination()
+    pages.value = result.pages
+    currentPageIndex.value =
+        startPage === 'last' ? Math.max(result.pages.length - 1, 0) : 0
+
+    preloadAdjacentChapters(chapterId, props.chapters)
+    return true
+}
+
+/** 向前/向后切换到相邻章节，首尾章节边界显示 toast 提示 */
+async function switchChapter(direction: 'prev' | 'next') {
+    if (chapterLoading.value) return
+
+    const idx = chapterIndex.value + (direction === 'prev' ? -1 : 1)
+    const chapter = props.chapters[idx]
+
+    if (!chapter) {
+        showToast(direction === 'prev' ? '已经是第一章了' : '已经是最后一章了')
+        return
+    }
+
+    const startPage = direction === 'next' ? 'first' : 'last'
+    const success = await loadAndApplyChapter(chapter.chapterId, startPage)
+
+    if (success) {
+        emit('chapter-change', chapter.chapterId)
+    }
+}
+
+/** 重试上一次失败的章节加载 */
+async function retryLoadChapter() {
+    const { chapterId, startPage } = pendingLoadTarget
+    const success = await loadAndApplyChapter(chapterId, startPage)
+    if (success && chapterId !== props.chapterId) {
+        emit('chapter-change', chapterId)
+    }
+}
+
+// ---- 外部章节变更（目录、工具栏切换）----
+
+watch(
+    () => props.chapterId,
+    (newId) => {
+        if (newId === activeChapterId.value) return
+        loadAndApplyChapter(newId, props.startPage)
     }
 )
+
+// ---- 排版参数变更 ----
 
 watch(
     () => [
@@ -117,6 +275,68 @@ watch(
     }
 )
 
+// ---- 相邻章节预分页 ----
+
+const PRELOAD_PAGE_THRESHOLD = 3
+const prePaginatedChapters = new Set<string>()
+
+function scheduleIdleWork(callback: () => void) {
+    if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => callback())
+    } else {
+        setTimeout(callback, 1)
+    }
+}
+
+/** 预加载相邻章节并在浏览器空闲时预先执行分页计算，避免跨章翻页时的分页延迟 */
+function scheduleAdjacentPagination(direction: 'prev' | 'next') {
+    const idx = chapterIndex.value + (direction === 'prev' ? -1 : 1)
+    const chapter = props.chapters[idx]
+    if (!chapter) return
+
+    const chapterId = chapter.chapterId
+    if (prePaginatedChapters.has(chapterId)) return
+    prePaginatedChapters.add(chapterId)
+
+    loadChapter(chapterId)
+        .then((content) => {
+            const paras = [
+                content.title,
+                ...content.content.split('\n').filter(Boolean),
+            ]
+            scheduleIdleWork(() => {
+                paginateWithCache(
+                    props.sourceId,
+                    props.bookId,
+                    chapterId,
+                    paras,
+                    getPageHeight(),
+                    0
+                )
+            })
+        })
+        .catch(() => {
+            prePaginatedChapters.delete(chapterId)
+        })
+}
+
+watch(currentPageIndex, (pageIdx) => {
+    const total = pages.value.length
+    if (total === 0) return
+
+    if (pageIdx >= total - PRELOAD_PAGE_THRESHOLD) {
+        scheduleAdjacentPagination('next')
+    }
+
+    if (pageIdx < PRELOAD_PAGE_THRESHOLD) {
+        scheduleAdjacentPagination('prev')
+    }
+})
+
+watch(activeChapterId, () => {
+    prePaginatedChapters.clear()
+})
+
 let resizeTimer: ReturnType<typeof setTimeout> | null = null
 
 function handleResize() {
@@ -130,17 +350,13 @@ function handleResize() {
 
 onMounted(() => {
     window.addEventListener('resize', handleResize)
-    if (props.content && paragraphs.value.length > 0) {
-        const result = executePagination()
-        pages.value = result.pages
-        currentPageIndex.value =
-            props.startPage === 'last' ? Math.max(result.pages.length - 1, 0) : 0
-    }
+    loadAndApplyChapter(props.chapterId, props.startPage)
 })
 
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize)
     if (resizeTimer) clearTimeout(resizeTimer)
+    if (toastTimer) clearTimeout(toastTimer)
 })
 
 function getSliceClass(slice: ParagraphSlice): Record<string, boolean> {
@@ -158,9 +374,18 @@ const VELOCITY_THRESHOLD = 0.3
 let activeFlipDirection: FlipDirection | null = null
 
 function canFlip(direction: FlipDirection): boolean {
+    if (direction === 'next') {
+        return currentPageIndex.value < pages.value.length - 1
+            || nextPage.value !== null
+    }
+    return currentPageIndex.value > 0
+        || prevPage.value !== null
+}
+
+function isCrossChapterFlip(direction: FlipDirection): boolean {
     return direction === 'next'
-        ? currentPageIndex.value < pages.value.length - 1
-        : currentPageIndex.value > 0
+        ? currentPageIndex.value >= pages.value.length - 1
+        : currentPageIndex.value <= 0
 }
 
 /** 清除三个槽位上残留的动画内联样式，让 CSS 类重新掌控可见性 */
@@ -177,10 +402,10 @@ function clearSlotInlineStyles() {
     }
 }
 
-/** 尝试启动翻页动画，边界情况发出事件，返回是否成功启动 */
+/** 尝试启动翻页动画；若已到章节边界则触发跨章切换 */
 function tryStartFlip(direction: FlipDirection): boolean {
     if (!canFlip(direction)) {
-        emit('boundary', direction)
+        switchChapter(direction)
         return false
     }
     const prev = prevPageRef.value!
@@ -192,14 +417,26 @@ function tryStartFlip(direction: FlipDirection): boolean {
     return started
 }
 
-/** 结束动画，根据结果更新页码并恢复槽位样式 */
+/** 结束动画，根据结果更新页码（跨章时同步切换章节数据）并恢复槽位样式 */
 async function completeFlip(completed: boolean) {
     if (!activeFlipDirection) return
     const direction = activeFlipDirection
+    const crossChapter = isCrossChapterFlip(direction)
+
     const didComplete = await finishAnimation(completed)
-    if (didComplete) {
+
+    if (didComplete && crossChapter) {
+        const idx = chapterIndex.value + (direction === 'prev' ? -1 : 1)
+        const chapter = props.chapters[idx]
+        if (chapter) {
+            const startPage = direction === 'next' ? 'first' : 'last'
+            applyCachedChapter(chapter.chapterId, startPage)
+            emit('chapter-change', chapter.chapterId)
+        }
+    } else if (didComplete) {
         currentPageIndex.value += direction === 'next' ? 1 : -1
     }
+
     activeFlipDirection = null
     await nextTick()
     clearSlotInlineStyles()
@@ -238,6 +475,7 @@ usePageGesture(containerRef, {
 defineExpose({
     pages,
     currentPageIndex,
+    activeChapterId,
 })
 </script>
 
@@ -289,6 +527,27 @@ defineExpose({
                     {{ slice.text }}
                 </p>
             </template>
+        </div>
+
+        <div
+            v-if="chapterLoading || chapterError"
+            class="paged-reader__overlay"
+        >
+            <span v-if="chapterLoading">加载中...</span>
+            <span
+                v-else
+                class="paged-reader__overlay-retry"
+                @click="retryLoadChapter"
+            >
+                {{ chapterError }}，点击重试
+            </span>
+        </div>
+
+        <div
+            v-if="toastMessage"
+            class="paged-reader__toast"
+        >
+            {{ toastMessage }}
         </div>
     </div>
 </template>
@@ -344,6 +603,40 @@ defineExpose({
         &--current {
             visibility: visible;
         }
+    }
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        background-color: var(--read-content-bg, #f1f1f1);
+        color: var(--read-text-color, #999);
+        font-size: 14px;
+
+        &-retry {
+            cursor: pointer;
+        }
+    }
+
+    &__toast {
+        position: absolute;
+        bottom: 40%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 100;
+        pointer-events: none;
+        white-space: nowrap;
     }
 }
 </style>

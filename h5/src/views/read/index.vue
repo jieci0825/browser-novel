@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { bookApi } from '@/api'
-import type { ChapterContent, Chapter } from '@/api/types/book.type'
+import type { Chapter } from '@/api/types/book.type'
 import {
     isInBookshelf,
     addToBookshelf,
@@ -22,11 +22,9 @@ const router = useRouter()
 const sourceId = route.params.sourceId as string
 const bookId = route.params.bookId as string
 
-const content = ref<ChapterContent | null>(null)
 const chapters = ref<Chapter[]>([])
 const inBookshelf = ref(true)
-const contentLoading = ref(true)
-const contentError = ref('')
+const chaptersLoading = ref(true)
 const chapterStartPage = ref<'first' | 'last'>('first')
 const toolbarVisible = ref(false)
 const settingsVisible = ref(false)
@@ -34,7 +32,7 @@ const catalogVisible = ref(false)
 
 const currentChapterId = computed(() => route.params.chapterId as string)
 
-const { ready, consumeInitialScroll } = useReadProgress({
+useReadProgress({
     sourceId,
     bookId,
     currentChapterId,
@@ -66,46 +64,21 @@ onMounted(async () => {
     window.addEventListener('keydown', handleKeydown)
     checkBookshelf()
     await fetchChapters()
-    await fetchContent()
 })
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown)
 })
 
-watch(currentChapterId, () => {
-    fetchContent()
-})
-
 async function fetchChapters() {
     try {
+        chaptersLoading.value = true
         const res = await bookApi.getChapters(sourceId, bookId)
         chapters.value = res
     } catch {
         // ignore
-    }
-}
-
-async function fetchContent() {
-    try {
-        contentLoading.value = true
-        contentError.value = ''
-        content.value = null
-        const res = await bookApi.getContent(
-            sourceId,
-            bookId,
-            currentChapterId.value
-        )
-        content.value = res
-        await ready
-        const scrollTop = consumeInitialScroll(currentChapterId.value)
-        contentLoading.value = false
-        await nextTick()
-        window.scrollTo({ top: scrollTop })
-    } catch {
-        contentError.value = '获取章节内容失败'
     } finally {
-        contentLoading.value = false
+        chaptersLoading.value = false
     }
 }
 
@@ -124,6 +97,14 @@ function goChapter(direction: 'prev' | 'next') {
 function goChapterFromToolbar(direction: 'prev' | 'next') {
     chapterStartPage.value = 'first'
     goChapter(direction)
+}
+
+/** PagedReader 内部跨章翻页后同步路由 */
+function handleChapterChange(chapterId: string) {
+    router.replace({
+        name: 'read',
+        params: { sourceId, bookId, chapterId },
+    })
 }
 
 async function checkBookshelf() {
@@ -179,11 +160,6 @@ function handleToggleToolbar() {
     toolbarVisible.value = !toolbarVisible.value
 }
 
-function handleBoundary(direction: 'prev' | 'next') {
-    chapterStartPage.value = direction === 'prev' ? 'last' : 'first'
-    goChapter(direction)
-}
-
 function scrollTo(position: 'top' | 'bottom') {
     const top = position === 'top' ? 0 : document.body.scrollHeight
     window.scrollTo({ top, behavior: 'smooth' })
@@ -194,27 +170,20 @@ function scrollTo(position: 'top' | 'bottom') {
     <div class="read-page">
         <div class="read-page-content-wrapper">
             <PagedReader
-                v-if="content && !contentLoading"
+                v-if="chapters.length > 0"
                 :source-id="sourceId"
                 :book-id="bookId"
                 :chapter-id="currentChapterId"
-                :content="content"
+                :chapters="chapters"
                 :start-page="chapterStartPage"
                 @toggle-toolbar="handleToggleToolbar"
-                @boundary="handleBoundary"
+                @chapter-change="handleChapterChange"
             />
             <div
-                v-else-if="contentLoading"
+                v-else-if="chaptersLoading"
                 class="read-page-loading"
             >
                 加载中...
-            </div>
-            <div
-                v-else-if="contentError"
-                class="read-page-error"
-                @click="fetchContent"
-            >
-                {{ contentError }}，点击重试
             </div>
         </div>
 
@@ -267,18 +236,13 @@ function scrollTo(position: 'top' | 'bottom') {
         overflow: hidden;
     }
 
-    &-loading,
-    &-error {
+    &-loading {
         display: flex;
         align-items: center;
         justify-content: center;
         height: 100%;
         color: var(--read-text-color, #999);
         font-size: 14px;
-    }
-
-    &-error {
-        cursor: pointer;
     }
 }
 </style>
