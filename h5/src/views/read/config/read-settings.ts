@@ -10,6 +10,10 @@ export interface ReadSettings {
     letterSpacing: number
     lineHeight: number
     paragraphSpacing: number
+    paddingTop: number
+    paddingRight: number
+    paddingBottom: number
+    paddingLeft: number
     readMode: ReadMode
     animationType: AnimationType
 }
@@ -30,6 +34,10 @@ const DEFAULT_SETTINGS: ReadSettings = {
     letterSpacing: 0,
     lineHeight: 1.9,
     paragraphSpacing: 1,
+    paddingTop: 15,
+    paddingRight: 15,
+    paddingBottom: 15,
+    paddingLeft: 15,
     readMode: 'paginated',
     animationType: 'slide',
 }
@@ -39,6 +47,10 @@ export const SETTING_LIMITS = {
     letterSpacing: { min: 0, max: 0.5, step: 0.01 },
     lineHeight: { min: 1.2, max: 3, step: 0.1 },
     paragraphSpacing: { min: 0, max: 3, step: 0.1 },
+    paddingTop: { min: 0, max: 60, step: 1 },
+    paddingRight: { min: 0, max: 60, step: 1 },
+    paddingBottom: { min: 0, max: 60, step: 1 },
+    paddingLeft: { min: 0, max: 60, step: 1 },
 }
 
 function loadSettings(): ReadSettings {
@@ -73,6 +85,10 @@ function applySettingsToDOM() {
         '--read-paragraph-spacing',
         `${readSettings.paragraphSpacing}em`
     )
+    root.style.setProperty('--read-padding-top', `${readSettings.paddingTop}px`)
+    root.style.setProperty('--read-padding-right', `${readSettings.paddingRight}px`)
+    root.style.setProperty('--read-padding-bottom', `${readSettings.paddingBottom}px`)
+    root.style.setProperty('--read-padding-left', `${readSettings.paddingLeft}px`)
     applyTheme(readSettings.themeIndex)
 }
 

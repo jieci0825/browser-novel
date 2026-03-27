@@ -265,7 +265,6 @@ function scrollTo(position: 'top' | 'bottom') {
     &-content-wrapper {
         flex: 1;
         overflow: hidden;
-        padding: 15px;
     }
 
     &-loading,

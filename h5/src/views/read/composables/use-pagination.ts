@@ -21,6 +21,10 @@ export function buildCacheKey(
         settings.lineHeight,
         settings.letterSpacing,
         settings.paragraphSpacing,
+        settings.paddingTop,
+        settings.paddingRight,
+        settings.paddingBottom,
+        settings.paddingLeft,
         font,
         containerSize.width,
         containerSize.height,
@@ -118,14 +122,16 @@ export function usePagination(container: Ref<HTMLElement | null> | string) {
         return container.value
     }
 
-    /** 计算阅读区域的内容宽度 */
+    /** 计算阅读区域的内容宽度，扣除左右 padding */
     function getContentWidth(): number {
-        return resolveContainer()?.clientWidth ?? window.innerWidth
+        const raw = resolveContainer()?.clientWidth ?? window.innerWidth
+        return raw - readSettings.paddingLeft - readSettings.paddingRight
     }
 
-    /** 计算单页可用高度 */
+    /** 计算单页可用高度，扣除上下 padding */
     function getPageHeight(): number {
-        return resolveContainer()?.clientHeight ?? window.innerHeight
+        const raw = resolveContainer()?.clientHeight ?? window.innerHeight
+        return raw - readSettings.paddingTop - readSettings.paddingBottom
     }
 
     /** 创建不可见的 DOM 测量容器，挂载到指定容器下，用于分页时测量段落尺寸 */
@@ -429,6 +435,10 @@ export function usePagination(container: Ref<HTMLElement | null> | string) {
             readSettings.lineHeight,
             readSettings.letterSpacing,
             readSettings.paragraphSpacing,
+            readSettings.paddingTop,
+            readSettings.paddingRight,
+            readSettings.paddingBottom,
+            readSettings.paddingLeft,
         ],
         () => {
             syncMeasureStyles()

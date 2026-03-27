@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import type { ChapterContent } from '@/api/types/book.type'
-import type { Page, ParagraphSlice } from '../types/reader'
+import type { Page, ParagraphSlice, FlipDirection } from '../types/reader'
 import { readSettings } from '../config/read-settings'
 import {
     usePagination,
     locatePositionBeforePaginate,
     resolvePageAfterPaginate,
 } from '../composables/use-pagination'
-import {
-    usePageGesture,
-    type GestureDirection,
-} from '../composables/use-page-gesture'
+import { usePageGesture } from '../composables/use-page-gesture'
+import { usePageAnimation } from '../composables/use-page-animation'
 
 const props = withDefaults(
     defineProps<{
@@ -30,12 +28,18 @@ const emit = defineEmits<{
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
+const prevPageRef = ref<HTMLElement | null>(null)
+const currentPageRef = ref<HTMLElement | null>(null)
+const nextPageRef = ref<HTMLElement | null>(null)
 
 const {
     paginateWithCache,
     getPageHeight,
     syncMeasureStyles,
 } = usePagination(containerRef)
+
+const { isAnimating, startAnimation, updateAnimation, finishAnimation } =
+    usePageAnimation()
 
 const pages = ref<Page[]>([])
 const currentPageIndex = ref(0)
@@ -146,31 +150,88 @@ function getSliceClass(slice: ParagraphSlice): Record<string, boolean> {
     }
 }
 
-/** 翻到上一页或下一页，到达章节边界时向父组件发出事件 */
-function goPage(direction: GestureDirection) {
-    if (direction === 'next') {
-        if (currentPageIndex.value >= pages.value.length - 1) {
-            emit('boundary', 'next')
-            return
-        }
-        currentPageIndex.value++
-    } else {
-        if (currentPageIndex.value <= 0) {
-            emit('boundary', 'prev')
-            return
-        }
-        currentPageIndex.value--
+// ---- 动画驱动翻页 ----
+
+const COMPLETE_RATIO = 1 / 3
+const VELOCITY_THRESHOLD = 0.3
+
+let activeFlipDirection: FlipDirection | null = null
+
+function canFlip(direction: FlipDirection): boolean {
+    return direction === 'next'
+        ? currentPageIndex.value < pages.value.length - 1
+        : currentPageIndex.value > 0
+}
+
+/** 清除三个槽位上残留的动画内联样式，让 CSS 类重新掌控可见性 */
+function clearSlotInlineStyles() {
+    const els = [prevPageRef.value, currentPageRef.value, nextPageRef.value]
+    for (const el of els) {
+        if (!el) continue
+        el.style.visibility = ''
+        el.style.pointerEvents = ''
+        el.style.transform = ''
+        el.style.transition = ''
+        el.style.zIndex = ''
+        el.style.boxShadow = ''
     }
 }
 
+/** 尝试启动翻页动画，边界情况发出事件，返回是否成功启动 */
+function tryStartFlip(direction: FlipDirection): boolean {
+    if (!canFlip(direction)) {
+        emit('boundary', direction)
+        return false
+    }
+    const prev = prevPageRef.value!
+    const current = currentPageRef.value
+    const next = nextPageRef.value!
+    if (!current) return false
+    const started = startAnimation(direction, prev, current, next)
+    if (started) activeFlipDirection = direction
+    return started
+}
+
+/** 结束动画，根据结果更新页码并恢复槽位样式 */
+async function completeFlip(completed: boolean) {
+    if (!activeFlipDirection) return
+    const direction = activeFlipDirection
+    const didComplete = await finishAnimation(completed)
+    if (didComplete) {
+        currentPageIndex.value += direction === 'next' ? 1 : -1
+    }
+    activeFlipDirection = null
+    await nextTick()
+    clearSlotInlineStyles()
+}
+
 usePageGesture(containerRef, {
-    onSwipe: goPage,
+    onDragStart(direction) {
+        tryStartFlip(direction)
+    },
+    onDragging(offsetX) {
+        updateAnimation(offsetX)
+    },
+    onDragEnd({ offsetX, velocity }) {
+        if (!isAnimating.value || !activeFlipDirection) return
+        const pageWidth = containerRef.value?.offsetWidth ?? 1
+        const isCorrectDirection =
+            (activeFlipDirection === 'next' && offsetX < 0) ||
+            (activeFlipDirection === 'prev' && offsetX > 0)
+        const completed =
+            isCorrectDirection &&
+            (Math.abs(offsetX) > pageWidth * COMPLETE_RATIO ||
+                velocity > VELOCITY_THRESHOLD)
+        completeFlip(completed)
+    },
     onTap(zone) {
         if (zone === 'toggle-toolbar') {
             emit('toggle-toolbar')
-        } else {
-            goPage(zone)
+            return
         }
+        const direction: FlipDirection = zone
+        if (!tryStartFlip(direction)) return
+        completeFlip(true)
     },
 })
 
@@ -186,42 +247,48 @@ defineExpose({
         class="paged-reader"
     >
         <div
-            v-if="prevPage"
+            ref="prevPageRef"
             class="paged-reader__page paged-reader__page--prev"
         >
-            <p
-                v-for="(slice, idx) in prevPage.paragraphs"
-                :key="`prev-${slice.paragraphIndex}-${slice.charStart}-${idx}`"
-                :class="getSliceClass(slice)"
-            >
-                {{ slice.text }}
-            </p>
+            <template v-if="prevPage">
+                <p
+                    v-for="(slice, idx) in prevPage.paragraphs"
+                    :key="`prev-${slice.paragraphIndex}-${slice.charStart}-${idx}`"
+                    :class="getSliceClass(slice)"
+                >
+                    {{ slice.text }}
+                </p>
+            </template>
         </div>
 
         <div
-            v-if="currentPage"
+            ref="currentPageRef"
             class="paged-reader__page paged-reader__page--current"
         >
-            <p
-                v-for="(slice, idx) in currentPage.paragraphs"
-                :key="`cur-${slice.paragraphIndex}-${slice.charStart}-${idx}`"
-                :class="getSliceClass(slice)"
-            >
-                {{ slice.text }}
-            </p>
+            <template v-if="currentPage">
+                <p
+                    v-for="(slice, idx) in currentPage.paragraphs"
+                    :key="`cur-${slice.paragraphIndex}-${slice.charStart}-${idx}`"
+                    :class="getSliceClass(slice)"
+                >
+                    {{ slice.text }}
+                </p>
+            </template>
         </div>
 
         <div
-            v-if="nextPage"
+            ref="nextPageRef"
             class="paged-reader__page paged-reader__page--next"
         >
-            <p
-                v-for="(slice, idx) in nextPage.paragraphs"
-                :key="`next-${slice.paragraphIndex}-${slice.charStart}-${idx}`"
-                :class="getSliceClass(slice)"
-            >
-                {{ slice.text }}
-            </p>
+            <template v-if="nextPage">
+                <p
+                    v-for="(slice, idx) in nextPage.paragraphs"
+                    :key="`next-${slice.paragraphIndex}-${slice.charStart}-${idx}`"
+                    :class="getSliceClass(slice)"
+                >
+                    {{ slice.text }}
+                </p>
+            </template>
         </div>
     </div>
 </template>
@@ -241,6 +308,10 @@ defineExpose({
         width: 100%;
         height: 100%;
         box-sizing: border-box;
+        padding: var(--read-padding-top, 15px)
+            var(--read-padding-right, 15px)
+            var(--read-padding-bottom, 15px)
+            var(--read-padding-left, 15px);
         font-size: var(--read-font-size, 17px);
         font-family: var(--read-font-family, sans-serif);
         line-height: var(--read-line-height, 1.9);
