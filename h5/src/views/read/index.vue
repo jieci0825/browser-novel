@@ -29,6 +29,7 @@ const inBookshelf = ref(true)
 const chaptersLoading = ref(true)
 const chapterStartPage = ref<'first' | 'last'>('first')
 const pagedReaderRef = ref<InstanceType<typeof PagedReader> | null>(null)
+const scrollReaderRef = ref<InstanceType<typeof ScrollReader> | null>(null)
 const toolbarVisible = ref(false)
 const settingsVisible = ref(false)
 const catalogVisible = ref(false)
@@ -52,13 +53,15 @@ const currentChapterName = computed(() => {
 })
 
 const currentPage = computed(() => {
-    if (!pagedReaderRef.value) return 1
-    return pagedReaderRef.value.currentPageIndex + 1
+    const reader = pagedReaderRef.value ?? scrollReaderRef.value
+    if (!reader) return 1
+    return reader.currentPageIndex + 1
 })
 
 const totalPages = computed(() => {
-    if (!pagedReaderRef.value) return 1
-    return Math.max(pagedReaderRef.value.pages.length, 1)
+    const reader = pagedReaderRef.value ?? scrollReaderRef.value
+    if (!reader) return 1
+    return Math.max(reader.pages.length, 1)
 })
 
 const hasPrev = computed(() => currentIndex.value > 0)
@@ -199,6 +202,7 @@ function scrollTo(position: 'top' | 'bottom') {
                 @chapter-change="handleChapterChange"
             />
             <ScrollReader
+                ref="scrollReaderRef"
                 v-else-if="chapters.length > 0"
                 :source-id="sourceId"
                 :book-id="bookId"
