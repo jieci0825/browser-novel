@@ -89,10 +89,12 @@ export function getChapters(sourceId: string, bookId: string) {
 export function getContent(
     sourceId: string,
     bookId: string,
-    chapterId: string
+    chapterId: string,
+    signal?: AbortSignal
 ) {
     return request<ChapterContent>({
         url: `/books/${sourceId}/content`,
         params: { bookId, chapterId },
+        signal,
     })
 }
