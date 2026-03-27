@@ -44,15 +44,19 @@ function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value))
 }
 
-function adjustSetting(
-    key: 'fontSize' | 'letterSpacing' | 'lineHeight' | 'paragraphSpacing',
-    delta: number
-) {
+type AdjustableKey = keyof typeof SETTING_LIMITS
+
+function getPrecision(key: AdjustableKey): number {
+    if (key === 'letterSpacing') return 2
+    if (key === 'lineHeight' || key === 'paragraphSpacing') return 1
+    return 0
+}
+
+function adjustSetting(key: AdjustableKey, delta: number) {
     const limit = SETTING_LIMITS[key]
     const raw = readSettings[key] + delta
-    const precision = key === 'fontSize' ? 0 : key === 'letterSpacing' ? 2 : 1
     readSettings[key] = Number(
-        clamp(raw, limit.min, limit.max).toFixed(precision)
+        clamp(raw, limit.min, limit.max).toFixed(getPrecision(key))
     )
 }
 
@@ -192,162 +196,174 @@ function handleMaskClick() {
                     </div>
 
                     <div class="setting-section">
-                        <span class="setting-label">字体大小</span>
-                        <div class="stepper">
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.fontSize <=
-                                    SETTING_LIMITS.fontSize.min
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'fontSize',
-                                        -SETTING_LIMITS.fontSize.step
-                                    )
-                                "
-                            >
-                                −
-                            </button>
-                            <span class="stepper__value"
-                                >{{ readSettings.fontSize }}px</span
-                            >
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.fontSize >=
-                                    SETTING_LIMITS.fontSize.max
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'fontSize',
-                                        SETTING_LIMITS.fontSize.step
-                                    )
-                                "
-                            >
-                                +
-                            </button>
+                        <span class="setting-label">排版</span>
+                        <div class="compact-group">
+                            <div class="compact-row">
+                                <span class="compact-row__label">字体大小</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.fontSize <= SETTING_LIMITS.fontSize.min"
+                                        @click="adjustSetting('fontSize', -SETTING_LIMITS.fontSize.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.fontSize }}px</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.fontSize >= SETTING_LIMITS.fontSize.max"
+                                        @click="adjustSetting('fontSize', SETTING_LIMITS.fontSize.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="compact-row">
+                                <span class="compact-row__label">字距</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.letterSpacing <= SETTING_LIMITS.letterSpacing.min"
+                                        @click="adjustSetting('letterSpacing', -SETTING_LIMITS.letterSpacing.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.letterSpacing.toFixed(2) }}em</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.letterSpacing >= SETTING_LIMITS.letterSpacing.max"
+                                        @click="adjustSetting('letterSpacing', SETTING_LIMITS.letterSpacing.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="compact-row">
+                                <span class="compact-row__label">行距</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.lineHeight <= SETTING_LIMITS.lineHeight.min"
+                                        @click="adjustSetting('lineHeight', -SETTING_LIMITS.lineHeight.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.lineHeight.toFixed(1) }}</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.lineHeight >= SETTING_LIMITS.lineHeight.max"
+                                        @click="adjustSetting('lineHeight', SETTING_LIMITS.lineHeight.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="compact-row">
+                                <span class="compact-row__label">段距</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paragraphSpacing <= SETTING_LIMITS.paragraphSpacing.min"
+                                        @click="adjustSetting('paragraphSpacing', -SETTING_LIMITS.paragraphSpacing.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.paragraphSpacing.toFixed(1) }}em</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paragraphSpacing >= SETTING_LIMITS.paragraphSpacing.max"
+                                        @click="adjustSetting('paragraphSpacing', SETTING_LIMITS.paragraphSpacing.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="setting-section">
-                        <span class="setting-label">字距</span>
-                        <div class="stepper">
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.letterSpacing <=
-                                    SETTING_LIMITS.letterSpacing.min
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'letterSpacing',
-                                        -SETTING_LIMITS.letterSpacing.step
-                                    )
-                                "
-                            >
-                                −
-                            </button>
-                            <span class="stepper__value"
-                                >{{
-                                    readSettings.letterSpacing.toFixed(2)
-                                }}em</span
-                            >
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.letterSpacing >=
-                                    SETTING_LIMITS.letterSpacing.max
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'letterSpacing',
-                                        SETTING_LIMITS.letterSpacing.step
-                                    )
-                                "
-                            >
-                                +
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="setting-section">
-                        <span class="setting-label">行距</span>
-                        <div class="stepper">
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.lineHeight <=
-                                    SETTING_LIMITS.lineHeight.min
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'lineHeight',
-                                        -SETTING_LIMITS.lineHeight.step
-                                    )
-                                "
-                            >
-                                −
-                            </button>
-                            <span class="stepper__value">{{
-                                readSettings.lineHeight.toFixed(1)
-                            }}</span>
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.lineHeight >=
-                                    SETTING_LIMITS.lineHeight.max
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'lineHeight',
-                                        SETTING_LIMITS.lineHeight.step
-                                    )
-                                "
-                            >
-                                +
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="setting-section">
-                        <span class="setting-label">段距</span>
-                        <div class="stepper">
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.paragraphSpacing <=
-                                    SETTING_LIMITS.paragraphSpacing.min
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'paragraphSpacing',
-                                        -SETTING_LIMITS.paragraphSpacing.step
-                                    )
-                                "
-                            >
-                                −
-                            </button>
-                            <span class="stepper__value"
-                                >{{
-                                    readSettings.paragraphSpacing.toFixed(1)
-                                }}em</span
-                            >
-                            <button
-                                class="stepper__btn"
-                                :disabled="
-                                    readSettings.paragraphSpacing >=
-                                    SETTING_LIMITS.paragraphSpacing.max
-                                "
-                                @click="
-                                    adjustSetting(
-                                        'paragraphSpacing',
-                                        SETTING_LIMITS.paragraphSpacing.step
-                                    )
-                                "
-                            >
-                                +
-                            </button>
+                        <span class="setting-label">边距</span>
+                        <div class="compact-group">
+                            <div class="compact-row">
+                                <span class="compact-row__label">上</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingTop <= SETTING_LIMITS.paddingTop.min"
+                                        @click="adjustSetting('paddingTop', -SETTING_LIMITS.paddingTop.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.paddingTop }}px</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingTop >= SETTING_LIMITS.paddingTop.max"
+                                        @click="adjustSetting('paddingTop', SETTING_LIMITS.paddingTop.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="compact-row">
+                                <span class="compact-row__label">下</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingBottom <= SETTING_LIMITS.paddingBottom.min"
+                                        @click="adjustSetting('paddingBottom', -SETTING_LIMITS.paddingBottom.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.paddingBottom }}px</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingBottom >= SETTING_LIMITS.paddingBottom.max"
+                                        @click="adjustSetting('paddingBottom', SETTING_LIMITS.paddingBottom.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="compact-row">
+                                <span class="compact-row__label">左</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingLeft <= SETTING_LIMITS.paddingLeft.min"
+                                        @click="adjustSetting('paddingLeft', -SETTING_LIMITS.paddingLeft.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.paddingLeft }}px</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingLeft >= SETTING_LIMITS.paddingLeft.max"
+                                        @click="adjustSetting('paddingLeft', SETTING_LIMITS.paddingLeft.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="compact-row">
+                                <span class="compact-row__label">右</span>
+                                <div class="compact-stepper">
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingRight <= SETTING_LIMITS.paddingRight.min"
+                                        @click="adjustSetting('paddingRight', -SETTING_LIMITS.paddingRight.step)"
+                                    >
+                                        −
+                                    </button>
+                                    <span class="compact-stepper__value">{{ readSettings.paddingRight }}px</span>
+                                    <button
+                                        class="compact-stepper__btn"
+                                        :disabled="readSettings.paddingRight >= SETTING_LIMITS.paddingRight.max"
+                                        @click="adjustSetting('paddingRight', SETTING_LIMITS.paddingRight.step)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -540,31 +556,48 @@ function handleMaskClick() {
     }
 }
 
-.stepper {
+.compact-group {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.compact-row {
     display: flex;
     align-items: center;
-    gap: 0;
+    justify-content: space-between;
+    padding: 0 12px;
+    height: 40px;
+
+    & + & {
+        border-top: 1px solid var(--border-default);
+    }
+
+    &__label {
+        font-size: 13px;
+        color: var(--text-primary);
+    }
+}
+
+.compact-stepper {
+    display: flex;
+    align-items: center;
 
     &__btn {
-        width: 36px;
-        height: 36px;
+        width: 28px;
+        height: 28px;
         border: 1px solid var(--border-default);
+        border-radius: 6px;
         background: transparent;
         color: var(--text-primary);
-        font-size: 18px;
+        font-size: 15px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         -webkit-tap-highlight-color: transparent;
-
-        &:first-child {
-            border-radius: 6px 0 0 6px;
-        }
-
-        &:last-child {
-            border-radius: 0 6px 6px 0;
-        }
 
         &:active:not(:disabled) {
             background-color: rgba(0, 0, 0, 0.04);
@@ -577,14 +610,9 @@ function handleMaskClick() {
     }
 
     &__value {
-        min-width: 72px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-top: 1px solid var(--border-default);
-        border-bottom: 1px solid var(--border-default);
-        font-size: 14px;
+        min-width: 60px;
+        text-align: center;
+        font-size: 13px;
         color: var(--text-primary);
         font-variant-numeric: tabular-nums;
     }

@@ -14,6 +14,7 @@ import ScrollReader from './components/scroll-reader.vue'
 import ReadToolbar from './components/read-toolbar.vue'
 import ReadCatalogPopup from './components/read-catalog-popup.vue'
 import ReadSettingsPopup from './components/read-settings-popup.vue'
+import ReadStatusBar from './components/read-status-bar.vue'
 
 defineOptions({ name: 'ReadPage' })
 
@@ -27,6 +28,7 @@ const chapters = ref<Chapter[]>([])
 const inBookshelf = ref(true)
 const chaptersLoading = ref(true)
 const chapterStartPage = ref<'first' | 'last'>('first')
+const pagedReaderRef = ref<InstanceType<typeof PagedReader> | null>(null)
 const toolbarVisible = ref(false)
 const settingsVisible = ref(false)
 const catalogVisible = ref(false)
@@ -44,6 +46,21 @@ useReadProgress({
 const currentIndex = computed(() =>
     chapters.value.findIndex(c => c.chapterId === currentChapterId.value)
 )
+const currentChapterName = computed(() => {
+    const chapter = chapters.value[currentIndex.value]
+    return chapter?.title ?? ''
+})
+
+const currentPage = computed(() => {
+    if (!pagedReaderRef.value) return 1
+    return pagedReaderRef.value.currentPageIndex + 1
+})
+
+const totalPages = computed(() => {
+    if (!pagedReaderRef.value) return 1
+    return Math.max(pagedReaderRef.value.pages.length, 1)
+})
+
 const hasPrev = computed(() => currentIndex.value > 0)
 const hasNext = computed(
     () =>
@@ -171,6 +188,7 @@ function scrollTo(position: 'top' | 'bottom') {
     <div class="read-page">
         <div class="read-page-content-wrapper">
             <PagedReader
+                ref="pagedReaderRef"
                 v-if="chapters.length > 0 && readSettings.readMode === 'paginated'"
                 :source-id="sourceId"
                 :book-id="bookId"
@@ -197,16 +215,13 @@ function scrollTo(position: 'top' | 'bottom') {
             </div>
         </div>
 
-        <div
-            style="
-                width: 100%;
-                height: 35px;
-                background-color: saddlebrown;
-                flex-shrink: 0;
-            "
-        >
-            状态栏占位
-        </div>
+        <ReadStatusBar
+            :chapter-name="currentChapterName"
+            :current-page="currentPage"
+            :total-pages="totalPages"
+            :current-chapter-index="currentIndex"
+            :total-chapters="chapters.length"
+        />
 
         <ReadToolbar
             :visible="toolbarVisible"

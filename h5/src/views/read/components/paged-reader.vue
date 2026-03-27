@@ -268,6 +268,10 @@ watch(
         readSettings.lineHeight,
         readSettings.letterSpacing,
         readSettings.paragraphSpacing,
+        readSettings.paddingTop,
+        readSettings.paddingRight,
+        readSettings.paddingBottom,
+        readSettings.paddingLeft,
     ],
     () => {
         if (pages.value.length === 0) return
