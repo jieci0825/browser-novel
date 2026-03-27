@@ -36,13 +36,15 @@ const catalogVisible = ref(false)
 
 const currentChapterId = computed(() => route.params.chapterId as string)
 
-useReadProgress({
+const { savePageProgress, ready, consumeInitialPageIndex } = useReadProgress({
     sourceId,
     bookId,
     currentChapterId,
     chapters,
     inBookshelf,
 })
+
+const savedPageIndex = ref(0)
 
 const currentIndex = computed(() =>
     chapters.value.findIndex(c => c.chapterId === currentChapterId.value)
@@ -84,6 +86,10 @@ onMounted(async () => {
 
     window.addEventListener('keydown', handleKeydown)
     checkBookshelf()
+
+    await ready
+    savedPageIndex.value = consumeInitialPageIndex(currentChapterId.value)
+
     await fetchChapters()
 })
 
@@ -185,6 +191,11 @@ function scrollTo(position: 'top' | 'bottom') {
     const top = position === 'top' ? 0 : document.body.scrollHeight
     window.scrollTo({ top, behavior: 'smooth' })
 }
+
+function handlePageChange(pageIndex: number) {
+    savedPageIndex.value = pageIndex
+    savePageProgress(pageIndex)
+}
 </script>
 
 <template>
@@ -198,8 +209,10 @@ function scrollTo(position: 'top' | 'bottom') {
                 :chapter-id="currentChapterId"
                 :chapters="chapters"
                 :start-page="chapterStartPage"
+                :initial-page-index="savedPageIndex"
                 @toggle-toolbar="handleToggleToolbar"
                 @chapter-change="handleChapterChange"
+                @page-change="handlePageChange"
             />
             <ScrollReader
                 ref="scrollReaderRef"
@@ -208,8 +221,10 @@ function scrollTo(position: 'top' | 'bottom') {
                 :book-id="bookId"
                 :chapter-id="currentChapterId"
                 :chapters="chapters"
+                :initial-page-index="savedPageIndex"
                 @toggle-toolbar="handleToggleToolbar"
                 @chapter-change="handleChapterChange"
+                @page-change="handlePageChange"
             />
             <div
                 v-else-if="chaptersLoading"

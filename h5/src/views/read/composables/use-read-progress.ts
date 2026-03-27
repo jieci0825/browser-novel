@@ -1,4 +1,4 @@
-import { watch, onMounted, onUnmounted, type Ref } from 'vue'
+import { onUnmounted, type Ref } from 'vue'
 import { bookApi } from '@/api'
 import type { Chapter } from '@/api/types/book.type'
 import type { ReadHistoryRecord } from '@/database/types'
@@ -7,7 +7,6 @@ import {
     getReadProgress,
 } from '@/database/services/read-history-service'
 import { updateBookshelfLastReadAt } from '@/database/services/bookshelf-service'
-import { readSettings } from '../config/read-settings'
 
 interface UseReadProgressOptions {
     sourceId: string
@@ -28,11 +27,11 @@ export function useReadProgress(options: UseReadProgressOptions) {
         options
 
     let bookInfo: BookInfo | null = null
-    let scrollTimer: ReturnType<typeof setTimeout> | null = null
     let initialRecord: ReadHistoryRecord | null = null
     let _pageIndex = 0
+    let saveTimer: ReturnType<typeof setTimeout> | null = null
 
-    const SCROLL_DEBOUNCE_MS = 500
+    const SAVE_DEBOUNCE_MS = 500
 
     const ready = loadBookInfo()
 
@@ -64,14 +63,15 @@ export function useReadProgress(options: UseReadProgressOptions) {
         }
     }
 
-    function consumeInitialScroll(chapterId: string): number {
+    /** 消费初始阅读进度页码（仅同章节有效，且只能消费一次） */
+    function consumeInitialPageIndex(chapterId: string): number {
         if (!initialRecord) return 0
-        const pos =
+        const pageIndex =
             String(initialRecord.lastReadChapterId) === String(chapterId)
                 ? initialRecord.scrollPosition
                 : 0
         initialRecord = null
-        return pos
+        return pageIndex
     }
 
     function buildRecord(): ReadHistoryRecord | null {
@@ -84,10 +84,6 @@ export function useReadProgress(options: UseReadProgressOptions) {
         if (!chapter) return null
 
         const total = chapterList.length
-        const scrollPosition =
-            readSettings.readMode === 'paginated'
-                ? _pageIndex
-                : window.scrollY
 
         return {
             sourceId,
@@ -99,7 +95,7 @@ export function useReadProgress(options: UseReadProgressOptions) {
             totalChapters: total,
             readProgress:
                 total > 0 ? Math.round(((idx + 1) / total) * 10000) / 100 : 0,
-            scrollPosition,
+            scrollPosition: _pageIndex,
             lastReadAt: Date.now(),
         }
     }
@@ -115,50 +111,20 @@ export function useReadProgress(options: UseReadProgressOptions) {
         }
     }
 
-    /** 翻页模式下由 PagedReader 主动调用，更新页码并保存进度 */
-    function savePagedProgress(pageIndex: number) {
+    /** 由阅读器组件调用，更新页码并延迟保存进度 */
+    function savePageProgress(pageIndex: number) {
         _pageIndex = pageIndex
-        saveProgress()
+        if (saveTimer) clearTimeout(saveTimer)
+        saveTimer = setTimeout(saveProgress, SAVE_DEBOUNCE_MS)
     }
-
-    function handleScroll() {
-        if (scrollTimer) clearTimeout(scrollTimer)
-        scrollTimer = setTimeout(saveProgress, SCROLL_DEBOUNCE_MS)
-    }
-
-    function addScrollListener() {
-        window.addEventListener('scroll', handleScroll, { passive: true })
-    }
-
-    function removeScrollListener() {
-        if (scrollTimer) clearTimeout(scrollTimer)
-        window.removeEventListener('scroll', handleScroll)
-    }
-
-    watch(currentChapterId, () => {
-        if (readSettings.readMode === 'scroll') {
-            saveProgress()
-        }
-    })
-
-    watch(
-        () => readSettings.readMode,
-        (mode, oldMode) => {
-            if (oldMode === 'scroll') removeScrollListener()
-            if (mode === 'scroll') addScrollListener()
-        }
-    )
-
-    onMounted(() => {
-        if (readSettings.readMode === 'scroll') {
-            addScrollListener()
-        }
-    })
 
     onUnmounted(() => {
-        removeScrollListener()
+        if (saveTimer) {
+            clearTimeout(saveTimer)
+            saveTimer = null
+        }
         saveProgress()
     })
 
-    return { saveProgress, savePagedProgress, ready, consumeInitialScroll }
+    return { savePageProgress, ready, consumeInitialPageIndex }
 }

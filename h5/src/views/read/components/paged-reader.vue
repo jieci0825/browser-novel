@@ -19,13 +19,15 @@ const props = withDefaults(
         chapterId: string
         chapters: Chapter[]
         startPage?: 'first' | 'last'
+        initialPageIndex?: number
     }>(),
-    { startPage: 'first' }
+    { startPage: 'first', initialPageIndex: 0 }
 )
 
 const emit = defineEmits<{
     'toggle-toolbar': []
     'chapter-change': [chapterId: string]
+    'page-change': [pageIndex: number]
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -165,7 +167,8 @@ function showToast(message: string, duration = 1500) {
 /** 加载指定章节并执行分页，通过版本号丢弃过期请求的结果 */
 async function loadAndApplyChapter(
     chapterId: string,
-    startPage: 'first' | 'last'
+    startPage: 'first' | 'last',
+    restorePageIndex?: number
 ): Promise<boolean> {
     const version = ++loadVersion
     pendingLoadTarget = { chapterId, startPage }
@@ -181,10 +184,14 @@ async function loadAndApplyChapter(
 
         const result = executePagination()
         pages.value = result.pages
-        currentPageIndex.value =
-            startPage === 'last'
-                ? Math.max(result.pages.length - 1, 0)
-                : 0
+
+        const lastPage = Math.max(result.pages.length - 1, 0)
+        if (restorePageIndex != null && restorePageIndex > 0) {
+            currentPageIndex.value = Math.min(restorePageIndex, lastPage)
+        } else {
+            currentPageIndex.value =
+                startPage === 'last' ? lastPage : 0
+        }
 
         preloadAdjacentChapters(chapterId, props.chapters)
         return true
@@ -354,13 +361,21 @@ function handleResize() {
 
 onMounted(() => {
     window.addEventListener('resize', handleResize)
-    loadAndApplyChapter(props.chapterId, props.startPage)
+    loadAndApplyChapter(
+        props.chapterId,
+        props.startPage,
+        props.initialPageIndex > 0 ? props.initialPageIndex : undefined
+    )
 })
 
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize)
     if (resizeTimer) clearTimeout(resizeTimer)
     if (toastTimer) clearTimeout(toastTimer)
+})
+
+watch([activeChapterId, currentPageIndex], () => {
+    emit('page-change', currentPageIndex.value)
 })
 
 function getSliceClass(slice: ParagraphSlice): Record<string, boolean> {

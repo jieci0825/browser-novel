@@ -12,16 +12,21 @@ interface LoadedChapter {
     pages: Page[]
 }
 
-const props = defineProps<{
-    sourceId: string
-    bookId: string
-    chapterId: string
-    chapters: Chapter[]
-}>()
+const props = withDefaults(
+    defineProps<{
+        sourceId: string
+        bookId: string
+        chapterId: string
+        chapters: Chapter[]
+        initialPageIndex?: number
+    }>(),
+    { initialPageIndex: 0 }
+)
 
 const emit = defineEmits<{
     'toggle-toolbar': []
     'chapter-change': [chapterId: string]
+    'page-change': [pageIndex: number]
 }>()
 
 const SCROLL_THRESHOLD = 500
@@ -160,7 +165,7 @@ function updateVisiblePage() {
     currentPageIndex.value = pageIndex
 }
 
-async function loadCurrentChapter(chapterId: string) {
+async function loadCurrentChapter(chapterId: string, initialPage = 0) {
     const version = ++loadVersion
     chapterLoading.value = true
     chapterError.value = ''
@@ -173,9 +178,15 @@ async function loadCurrentChapter(chapterId: string) {
         const content = await loadChapter(chapterId)
         if (version !== loadVersion) return
 
-        loadedChapters.value = [toLoadedChapter(chapterId, content)]
+        const loaded = toLoadedChapter(chapterId, content)
+        loadedChapters.value = [loaded]
         activeChapterId.value = chapterId
-        currentPageIndex.value = 0
+
+        const clampedPage = Math.min(
+            initialPage,
+            Math.max(loaded.pages.length - 1, 0)
+        )
+        currentPageIndex.value = clampedPage
 
         const idx = findChapterIndex(chapterId)
         reachedEnd.value = idx === props.chapters.length - 1
@@ -184,6 +195,10 @@ async function loadCurrentChapter(chapterId: string) {
         preloadAdjacentChapters(chapterId, props.chapters)
 
         await nextTick()
+
+        if (clampedPage > 0) {
+            scrollToPage(chapterId, clampedPage)
+        }
     } catch {
         if (version !== loadVersion) return
         chapterError.value = '章节加载失败'
@@ -196,6 +211,21 @@ async function loadCurrentChapter(chapterId: string) {
     if (loadVersion === version) {
         checkScrollPosition()
     }
+}
+
+/** 滚动容器到指定章节的指定页码位置 */
+function scrollToPage(chapterId: string, pageIndex: number) {
+    const container = containerRef.value
+    if (!container) return
+
+    const pageEl = container.querySelector<HTMLElement>(
+        `.scroll-reader__page[data-chapter-id="${chapterId}"][data-page-index="${pageIndex}"]`
+    )
+    if (!pageEl) return
+
+    const containerRect = container.getBoundingClientRect()
+    const pageRect = pageEl.getBoundingClientRect()
+    container.scrollTop += pageRect.top - containerRect.top
 }
 
 async function loadNextChapter() {
@@ -399,7 +429,7 @@ watch(
 
 onMounted(() => {
     window.addEventListener('resize', handleResize)
-    loadCurrentChapter(props.chapterId)
+    loadCurrentChapter(props.chapterId, props.initialPageIndex)
 })
 
 onUnmounted(() => {
@@ -409,6 +439,10 @@ onUnmounted(() => {
         clearTimeout(scrollThrottleTimer)
         scrollThrottleTimer = null
     }
+})
+
+watch([activeChapterId, currentPageIndex], () => {
+    emit('page-change', currentPageIndex.value)
 })
 
 defineExpose({
