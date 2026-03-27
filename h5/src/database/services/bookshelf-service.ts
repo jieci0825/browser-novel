@@ -35,7 +35,7 @@ export async function updateBookshelfLastReadAt(
 /** 获取书架列表并关联阅读进度（按最后阅读时间倒序） */
 export async function getBookshelfWithProgress(): Promise<Book[]> {
     const [shelfList, historyList] = await Promise.all([
-        db.bookshelf.orderBy('lastReadAt').reverse().toArray(),
+        db.bookshelf.toArray(),
         db.readHistory.toArray(),
     ])
 
@@ -43,8 +43,20 @@ export async function getBookshelfWithProgress(): Promise<Book[]> {
         historyList.map(h => [`${h.sourceId}-${h.bookId}`, h])
     )
 
-    return shelfList.map(shelf => ({
-        ...shelf,
-        ...historyMap.get(`${shelf.sourceId}-${shelf.bookId}`),
-    }))
+    return shelfList
+        .map(shelf => {
+            const h = historyMap.get(`${shelf.sourceId}-${shelf.bookId}`)
+            return {
+                ...shelf,
+                ...(h && {
+                    lastReadChapterId: h.lastReadChapterId,
+                    lastReadChapterTitle: h.lastReadChapterTitle,
+                    lastReadChapterIndex: h.lastReadChapterIndex,
+                    totalChapters: h.totalChapters,
+                    readProgress: h.readProgress,
+                    scrollPosition: h.scrollPosition,
+                }),
+            }
+        })
+        .sort((a, b) => b.lastReadAt - a.lastReadAt)
 }
