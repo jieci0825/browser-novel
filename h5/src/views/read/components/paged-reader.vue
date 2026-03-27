@@ -13,12 +13,16 @@ import {
     type GestureDirection,
 } from '../composables/use-page-gesture'
 
-const props = defineProps<{
-    sourceId: string
-    bookId: string
-    chapterId: string
-    content: ChapterContent | null
-}>()
+const props = withDefaults(
+    defineProps<{
+        sourceId: string
+        bookId: string
+        chapterId: string
+        content: ChapterContent | null
+        startPage?: 'first' | 'last'
+    }>(),
+    { startPage: 'first' }
+)
 
 const emit = defineEmits<{
     'toggle-toolbar': []
@@ -89,7 +93,8 @@ watch(
         }
         const result = executePagination()
         pages.value = result.pages
-        currentPageIndex.value = 0
+        currentPageIndex.value =
+            props.startPage === 'last' ? Math.max(result.pages.length - 1, 0) : 0
     }
 )
 
@@ -124,7 +129,8 @@ onMounted(() => {
     if (props.content && paragraphs.value.length > 0) {
         const result = executePagination()
         pages.value = result.pages
-        currentPageIndex.value = 0
+        currentPageIndex.value =
+            props.startPage === 'last' ? Math.max(result.pages.length - 1, 0) : 0
     }
 })
 

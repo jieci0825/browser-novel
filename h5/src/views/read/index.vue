@@ -27,6 +27,7 @@ const chapters = ref<Chapter[]>([])
 const inBookshelf = ref(true)
 const contentLoading = ref(true)
 const contentError = ref('')
+const chapterStartPage = ref<'first' | 'last'>('first')
 const toolbarVisible = ref(false)
 const settingsVisible = ref(false)
 const catalogVisible = ref(false)
@@ -53,9 +54,9 @@ const hasNext = computed(
 
 function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'ArrowLeft' && hasPrev.value) {
-        goChapter('prev')
+        goChapterFromToolbar('prev')
     } else if (e.key === 'ArrowRight' && hasNext.value) {
-        goChapter('next')
+        goChapterFromToolbar('next')
     }
 }
 
@@ -119,6 +120,12 @@ function goChapter(direction: 'prev' | 'next') {
     })
 }
 
+/** 通过工具栏或键盘切换章节时，始终从第一页开始 */
+function goChapterFromToolbar(direction: 'prev' | 'next') {
+    chapterStartPage.value = 'first'
+    goChapter(direction)
+}
+
 async function checkBookshelf() {
     inBookshelf.value = await isInBookshelf(sourceId, bookId)
 }
@@ -151,6 +158,7 @@ function handleCatalog() {
 
 function handleCatalogSelect(chapterId: string) {
     if (chapterId === currentChapterId.value) return
+    chapterStartPage.value = 'first'
     toolbarVisible.value = false
     router.replace({
         name: 'read',
@@ -172,6 +180,7 @@ function handleToggleToolbar() {
 }
 
 function handleBoundary(direction: 'prev' | 'next') {
+    chapterStartPage.value = direction === 'prev' ? 'last' : 'first'
     goChapter(direction)
 }
 
@@ -190,6 +199,7 @@ function scrollTo(position: 'top' | 'bottom') {
                 :book-id="bookId"
                 :chapter-id="currentChapterId"
                 :content="content"
+                :start-page="chapterStartPage"
                 @toggle-toolbar="handleToggleToolbar"
                 @boundary="handleBoundary"
             />
@@ -224,8 +234,8 @@ function scrollTo(position: 'top' | 'bottom') {
             :has-prev="hasPrev"
             :has-next="hasNext"
             :in-bookshelf="inBookshelf"
-            @prev="goChapter('prev')"
-            @next="goChapter('next')"
+            @prev="goChapterFromToolbar('prev')"
+            @next="goChapterFromToolbar('next')"
             @catalog="handleCatalog"
             @settings="handleSettings"
             @bookshelf="handleBookshelf"
