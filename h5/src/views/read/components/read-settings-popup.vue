@@ -6,6 +6,19 @@ import {
     FONT_OPTIONS,
     SETTING_LIMITS,
 } from '../config/read-settings'
+import type { ReadMode, AnimationType } from '../types/reader'
+
+const READ_MODE_OPTIONS: { label: string; value: ReadMode }[] = [
+    { label: '翻页', value: 'paginated' },
+    { label: '滚动', value: 'scroll' },
+]
+
+const ANIMATION_TYPE_OPTIONS: { label: string; value: AnimationType }[] = [
+    { label: '平移', value: 'slide' },
+    { label: '覆盖', value: 'cover' },
+    { label: '仿真', value: 'simulation' },
+    { label: '无', value: 'none' },
+]
 
 const visible = defineModel<boolean>({ required: true })
 
@@ -79,6 +92,39 @@ function handleMaskClick() {
                 </div>
 
                 <div class="settings-popup__body">
+                    <div class="setting-section">
+                        <span class="setting-label">阅读模式</span>
+                        <div class="option-list">
+                            <button
+                                v-for="opt in READ_MODE_OPTIONS"
+                                :key="opt.value"
+                                class="option-btn"
+                                :class="{ 'option-btn--active': readSettings.readMode === opt.value }"
+                                @click="readSettings.readMode = opt.value"
+                            >
+                                {{ opt.label }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="readSettings.readMode === 'paginated'"
+                        class="setting-section"
+                    >
+                        <span class="setting-label">翻页动画</span>
+                        <div class="option-list">
+                            <button
+                                v-for="opt in ANIMATION_TYPE_OPTIONS"
+                                :key="opt.value"
+                                class="option-btn"
+                                :class="{ 'option-btn--active': readSettings.animationType === opt.value }"
+                                @click="readSettings.animationType = opt.value"
+                            >
+                                {{ opt.label }}
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="setting-section">
                         <span class="setting-label">阅读主题</span>
                         <div class="theme-list">
@@ -404,6 +450,29 @@ function handleMaskClick() {
 
     &--active {
         border-color: var(--color-danger);
+    }
+}
+
+.option-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.option-btn {
+    padding: 6px 16px;
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-primary);
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s;
+
+    &--active {
+        border-color: var(--color-danger);
+        color: var(--color-danger);
     }
 }
 

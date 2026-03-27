@@ -7,9 +7,10 @@ import {
     isInBookshelf,
     addToBookshelf,
 } from '@/database/services/bookshelf-service'
-import { initReadSettings } from './config/read-settings'
+import { readSettings, initReadSettings } from './config/read-settings'
 import { useReadProgress } from './composables/use-read-progress'
 import PagedReader from './components/paged-reader.vue'
+import ScrollReader from './components/scroll-reader.vue'
 import ReadToolbar from './components/read-toolbar.vue'
 import ReadCatalogPopup from './components/read-catalog-popup.vue'
 import ReadSettingsPopup from './components/read-settings-popup.vue'
@@ -170,12 +171,21 @@ function scrollTo(position: 'top' | 'bottom') {
     <div class="read-page">
         <div class="read-page-content-wrapper">
             <PagedReader
-                v-if="chapters.length > 0"
+                v-if="chapters.length > 0 && readSettings.readMode === 'paginated'"
                 :source-id="sourceId"
                 :book-id="bookId"
                 :chapter-id="currentChapterId"
                 :chapters="chapters"
                 :start-page="chapterStartPage"
+                @toggle-toolbar="handleToggleToolbar"
+                @chapter-change="handleChapterChange"
+            />
+            <ScrollReader
+                v-else-if="chapters.length > 0"
+                :source-id="sourceId"
+                :book-id="bookId"
+                :chapter-id="currentChapterId"
+                :chapters="chapters"
                 @toggle-toolbar="handleToggleToolbar"
                 @chapter-change="handleChapterChange"
             />
