@@ -17,6 +17,8 @@ function createAnimationByType(type: AnimationType): PageAnimation {
             return createCoverAnimation()
         case 'none':
             return createNoneAnimation()
+        default:
+            return createSlideAnimation()
     }
 }
 
@@ -28,7 +30,7 @@ export function usePageAnimation() {
     watch(
         () => readSettings.animationType,
         newType => {
-            animation.destroy()
+            animation?.destroy()
             isAnimating.value = false
             animation = createAnimationByType(newType)
         }
@@ -63,7 +65,7 @@ export function usePageAnimation() {
     }
 
     onUnmounted(() => {
-        animation.destroy()
+        animation?.destroy()
     })
 
     return {

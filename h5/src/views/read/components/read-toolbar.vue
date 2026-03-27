@@ -13,8 +13,6 @@ const emit = defineEmits<{
     settings: []
     bookshelf: []
     addToBookshelf: []
-    scrollTop: []
-    scrollBottom: []
 }>()
 </script>
 
@@ -59,18 +57,6 @@ const emit = defineEmits<{
                         <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z" />
                     </svg>
                     <span>书架</span>
-                </button>
-                <button class="toolbar-action" @click="emit('scrollTop')">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                        <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
-                    </svg>
-                    <span>顶部</span>
-                </button>
-                <button class="toolbar-action" @click="emit('scrollBottom')">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
-                    </svg>
-                    <span>底部</span>
                 </button>
             </div>
         </div>

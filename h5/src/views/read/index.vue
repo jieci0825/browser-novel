@@ -6,6 +6,7 @@ import type { Chapter } from '@/api/types/book.type'
 import {
     isInBookshelf,
     addToBookshelf,
+    updateBookshelfLastReadAt,
 } from '@/database/services/bookshelf-service'
 import { readSettings, initReadSettings } from './config/read-settings'
 import { useReadProgress } from './composables/use-read-progress'
@@ -86,6 +87,7 @@ onMounted(async () => {
 
     window.addEventListener('keydown', handleKeydown)
     checkBookshelf()
+    updateBookshelfLastReadAt(sourceId, bookId, Date.now())
 
     await ready
     savedPageIndex.value = consumeInitialPageIndex(currentChapterId.value)
