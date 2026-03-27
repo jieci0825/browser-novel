@@ -8,12 +8,21 @@ import {
     locatePositionBeforePaginate,
     resolvePageAfterPaginate,
 } from '../composables/use-pagination'
+import {
+    usePageGesture,
+    type GestureDirection,
+} from '../composables/use-page-gesture'
 
 const props = defineProps<{
     sourceId: string
     bookId: string
     chapterId: string
     content: ChapterContent | null
+}>()
+
+const emit = defineEmits<{
+    'toggle-toolbar': []
+    'boundary': [direction: 'prev' | 'next']
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -127,9 +136,37 @@ onUnmounted(() => {
 function getSliceClass(slice: ParagraphSlice): Record<string, boolean> {
     return {
         'm-title': !!slice.isTitle,
-        'm-partial': slice.isPartial && !slice.isTitle,
+        'm-partial': slice.charStart > 0 && !slice.isTitle,
     }
 }
+
+/** 翻到上一页或下一页，到达章节边界时向父组件发出事件 */
+function goPage(direction: GestureDirection) {
+    if (direction === 'next') {
+        if (currentPageIndex.value >= pages.value.length - 1) {
+            emit('boundary', 'next')
+            return
+        }
+        currentPageIndex.value++
+    } else {
+        if (currentPageIndex.value <= 0) {
+            emit('boundary', 'prev')
+            return
+        }
+        currentPageIndex.value--
+    }
+}
+
+usePageGesture(containerRef, {
+    onSwipe: goPage,
+    onTap(zone) {
+        if (zone === 'toggle-toolbar') {
+            emit('toggle-toolbar')
+        } else {
+            goPage(zone)
+        }
+    },
+})
 
 defineExpose({
     pages,
@@ -189,6 +226,7 @@ defineExpose({
     width: 100%;
     height: 100%;
     overflow: hidden;
+    touch-action: none;
 
     &__page {
         position: absolute;

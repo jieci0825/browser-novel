@@ -36,7 +36,10 @@ export function locatePositionBeforePaginate(
         return { paragraphIndex: 0, charOffset: 0 }
     }
 
-    const clampedIndex = Math.max(0, Math.min(currentPageIndex, pages.length - 1))
+    const clampedIndex = Math.max(
+        0,
+        Math.min(currentPageIndex, pages.length - 1)
+    )
     const page = pages[clampedIndex]!
     const firstSlice = page.paragraphs[0]
 
@@ -61,7 +64,10 @@ export function resolvePageAfterPaginate(
         const page = newPages[i]!
         for (const slice of page.paragraphs) {
             if (slice.paragraphIndex !== position.paragraphIndex) continue
-            if (position.charOffset >= slice.charStart && position.charOffset < slice.charEnd) {
+            if (
+                position.charOffset >= slice.charStart &&
+                position.charOffset < slice.charEnd
+            ) {
                 return i
             }
         }
@@ -241,24 +247,32 @@ export function usePagination(container: Ref<HTMLElement | null> | string) {
         if (!measureEl || paragraphs.length === 0 || pageHeight <= 0)
             return empty
 
+        // 段落间距
         const spacingPx = readSettings.paragraphSpacing * readSettings.fontSize
+        // 分页结果
         const pages: Page[] = []
+        // 当前页
         let currentPage: Page = { paragraphs: [] }
+        // 已使用高度
         let usedHeight = 0
 
-        let i = 0
+        let i = 0 // 当前段落索引
         while (i < paragraphs.length) {
-            const fullText = paragraphs[i]!
-            const isTitle = i === titleIndex
-            let remainingText = fullText
-            let charStart = 0
-            let isContinuation = false
+            const fullText = paragraphs[i]! // 当前段落文本
+            const isTitle = i === titleIndex // 是否为标题
+            let remainingText = fullText // 剩余文本
+            let charStart = 0 // 当前段落字符索引
+            let isContinuation = false // 是否为续段
 
+            // 剩余文本不为空时，继续分页
             while (remainingText.length > 0) {
+                // 如果当前页有段落，则需要得到段落间距
                 const spacing =
                     currentPage.paragraphs.length > 0 ? spacingPx : 0
+                // 可用高度 = 页面高度 - 已使用高度 - 段落间距
                 const availableHeight = pageHeight - usedHeight - spacing
 
+                // 可用高度小于等于0时，说明当前页已经满了，需要新开一页
                 if (availableHeight <= 0) {
                     pages.push(currentPage)
                     currentPage = { paragraphs: [] }
@@ -266,9 +280,11 @@ export function usePagination(container: Ref<HTMLElement | null> | string) {
                     continue
                 }
 
+                // 测量段落文本，返回内容高度和文本节点引用
                 const { height, textNode } = measureParagraph(
                     remainingText,
-                    isTitle && !isContinuation,
+                    // isTitle && !isContinuation,
+                    isTitle,
                     isContinuation
                 )
 

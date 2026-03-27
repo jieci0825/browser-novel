@@ -9,8 +9,7 @@ import {
 } from '@/database/services/bookshelf-service'
 import { initReadSettings } from './config/read-settings'
 import { useReadProgress } from './composables/use-read-progress'
-import { usePagination } from './composables/use-pagination'
-import ReadContent from './components/read-content.vue'
+import PagedReader from './components/paged-reader.vue'
 import ReadToolbar from './components/read-toolbar.vue'
 import ReadCatalogPopup from './components/read-catalog-popup.vue'
 import ReadSettingsPopup from './components/read-settings-popup.vue'
@@ -41,8 +40,6 @@ const { ready, consumeInitialScroll } = useReadProgress({
     chapters,
     inBookshelf,
 })
-
-usePagination('#read-content')
 
 const currentIndex = computed(() =>
     chapters.value.findIndex(c => c.chapterId === currentChapterId.value)
@@ -169,9 +166,13 @@ function handleSettings() {
     settingsVisible.value = true
 }
 
-function handleContentClick() {
+function handleToggleToolbar() {
     if (catalogVisible.value || settingsVisible.value) return
     toolbarVisible.value = !toolbarVisible.value
+}
+
+function handleBoundary(direction: 'prev' | 'next') {
+    goChapter(direction)
 }
 
 function scrollTo(position: 'top' | 'bottom') {
@@ -183,13 +184,28 @@ function scrollTo(position: 'top' | 'bottom') {
 <template>
     <div class="read-page">
         <div class="read-page-content-wrapper">
-            <ReadContent
+            <PagedReader
+                v-if="content && !contentLoading"
+                :source-id="sourceId"
+                :book-id="bookId"
+                :chapter-id="currentChapterId"
                 :content="content"
-                :loading="contentLoading"
-                :error="contentError"
-                @retry="fetchContent"
-                @click="handleContentClick"
+                @toggle-toolbar="handleToggleToolbar"
+                @boundary="handleBoundary"
             />
+            <div
+                v-else-if="contentLoading"
+                class="read-page-loading"
+            >
+                加载中...
+            </div>
+            <div
+                v-else-if="contentError"
+                class="read-page-error"
+                @click="fetchContent"
+            >
+                {{ contentError }}，点击重试
+            </div>
         </div>
 
         <div
@@ -240,6 +256,20 @@ function scrollTo(position: 'top' | 'bottom') {
         flex: 1;
         overflow: hidden;
         padding: 15px;
+    }
+
+    &-loading,
+    &-error {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--read-text-color, #999);
+        font-size: 14px;
+    }
+
+    &-error {
+        cursor: pointer;
     }
 }
 </style>
