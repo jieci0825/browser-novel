@@ -67,3 +67,23 @@ export interface ScrollProgress {
 
 /** 阅读进度（联合类型） */
 export type ReadProgress = PaginatedProgress | ScrollProgress
+
+/** 翻页方向 */
+export type FlipDirection = 'prev' | 'next'
+
+/** 翻页动画接口 —— 所有动画实现须遵循此约定 */
+export interface PageAnimation {
+    /** 初始化动画，设置参与动画的 DOM 元素和翻页方向 */
+    start(
+        direction: FlipDirection,
+        prevEl: HTMLElement,
+        currentEl: HTMLElement,
+        nextEl: HTMLElement
+    ): void
+    /** 跟手更新动画状态 */
+    update(offsetX: number): void
+    /** 完成翻页或回弹，返回动画结束的 Promise */
+    finish(completed: boolean): Promise<void>
+    /** 清理动画资源 */
+    destroy(): void
+}
