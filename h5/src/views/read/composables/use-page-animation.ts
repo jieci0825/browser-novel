@@ -1,6 +1,10 @@
 import { ref, watch, onUnmounted } from 'vue'
 import { readSettings } from '../config/read-settings'
-import type { PageAnimation, FlipDirection, AnimationType } from '../types/reader'
+import type {
+    PageAnimation,
+    FlipDirection,
+    AnimationType,
+} from '../types/reader'
 import { createSlideAnimation } from '../animations/slide-animation'
 import { createCoverAnimation } from '../animations/cover-animation'
 import { createNoneAnimation } from '../animations/none-animation'
@@ -11,8 +15,6 @@ function createAnimationByType(type: AnimationType): PageAnimation {
             return createSlideAnimation()
         case 'cover':
             return createCoverAnimation()
-        case 'simulation':
-            return createSlideAnimation()
         case 'none':
             return createNoneAnimation()
     }
@@ -25,7 +27,7 @@ export function usePageAnimation() {
 
     watch(
         () => readSettings.animationType,
-        (newType) => {
+        newType => {
             animation.destroy()
             isAnimating.value = false
             animation = createAnimationByType(newType)

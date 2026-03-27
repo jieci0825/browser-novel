@@ -4,7 +4,7 @@ import type { ChapterContent } from '@/api/types/book.type'
 export type ReadMode = 'paginated' | 'scroll'
 
 /** 翻页动画类型（仅左右分页模式） */
-export type AnimationType = 'slide' | 'cover' | 'simulation' | 'none'
+export type AnimationType = 'slide' | 'cover' | 'none'
 
 /** 段落分片 —— 一个段落在某一页中的文本片段 */
 export interface ParagraphSlice {

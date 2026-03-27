@@ -203,7 +203,9 @@ function handlePageChange(pageIndex: number) {
         <div class="read-page-content-wrapper">
             <PagedReader
                 ref="pagedReaderRef"
-                v-if="chapters.length > 0 && readSettings.readMode === 'paginated'"
+                v-if="
+                    chapters.length > 0 && readSettings.readMode === 'paginated'
+                "
                 :source-id="sourceId"
                 :book-id="bookId"
                 :chapter-id="currentChapterId"

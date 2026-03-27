@@ -35,11 +35,8 @@ const prevPageRef = ref<HTMLElement | null>(null)
 const currentPageRef = ref<HTMLElement | null>(null)
 const nextPageRef = ref<HTMLElement | null>(null)
 
-const {
-    paginateWithCache,
-    getPageHeight,
-    syncMeasureStyles,
-} = usePagination(containerRef)
+const { paginateWithCache, getPageHeight, syncMeasureStyles } =
+    usePagination(containerRef)
 
 const { isAnimating, startAnimation, updateAnimation, finishAnimation } =
     usePageAnimation()
@@ -145,7 +142,10 @@ function executePagination() {
 /** 重新分页并保持阅读位置不变 */
 function repaginateWithPositionKeep() {
     if (pages.value.length === 0) return
-    const pos = locatePositionBeforePaginate(currentPageIndex.value, pages.value)
+    const pos = locatePositionBeforePaginate(
+        currentPageIndex.value,
+        pages.value
+    )
     const result = executePagination()
     pages.value = result.pages
     currentPageIndex.value = resolvePageAfterPaginate(pos, result.pages)
@@ -189,8 +189,7 @@ async function loadAndApplyChapter(
         if (restorePageIndex != null && restorePageIndex > 0) {
             currentPageIndex.value = Math.min(restorePageIndex, lastPage)
         } else {
-            currentPageIndex.value =
-                startPage === 'last' ? lastPage : 0
+            currentPageIndex.value = startPage === 'last' ? lastPage : 0
         }
 
         preloadAdjacentChapters(chapterId, props.chapters)
@@ -209,7 +208,10 @@ async function loadAndApplyChapter(
 // ---- 跨章翻页 ----
 
 /** 同步应用已缓存的章节数据（跨章动画完成后调用，避免异步间隙导致的遮罩闪烁） */
-function applyCachedChapter(chapterId: string, startPage: 'first' | 'last'): boolean {
+function applyCachedChapter(
+    chapterId: string,
+    startPage: 'first' | 'last'
+): boolean {
     const cached = getChapter(chapterId)
     if (!cached) return false
 
@@ -259,7 +261,7 @@ async function retryLoadChapter() {
 
 watch(
     () => props.chapterId,
-    (newId) => {
+    newId => {
         if (newId === activeChapterId.value) return
         loadAndApplyChapter(newId, props.startPage)
     }
@@ -310,7 +312,7 @@ function scheduleAdjacentPagination(direction: 'prev' | 'next') {
     prePaginatedChapters.add(chapterId)
 
     loadChapter(chapterId)
-        .then((content) => {
+        .then(content => {
             const paras = [
                 content.title,
                 ...content.content.split('\n').filter(Boolean),
@@ -331,7 +333,7 @@ function scheduleAdjacentPagination(direction: 'prev' | 'next') {
         })
 }
 
-watch(currentPageIndex, (pageIdx) => {
+watch(currentPageIndex, pageIdx => {
     const total = pages.value.length
     if (total === 0) return
 
@@ -394,11 +396,12 @@ let activeFlipDirection: FlipDirection | null = null
 
 function canFlip(direction: FlipDirection): boolean {
     if (direction === 'next') {
-        return currentPageIndex.value < pages.value.length - 1
-            || nextPage.value !== null
+        return (
+            currentPageIndex.value < pages.value.length - 1 ||
+            nextPage.value !== null
+        )
     }
-    return currentPageIndex.value > 0
-        || prevPage.value !== null
+    return currentPageIndex.value > 0 || prevPage.value !== null
 }
 
 function isCrossChapterFlip(direction: FlipDirection): boolean {
@@ -586,10 +589,8 @@ defineExpose({
         width: 100%;
         height: 100%;
         box-sizing: border-box;
-        padding: var(--read-padding-top, 15px)
-            var(--read-padding-right, 15px)
-            var(--read-padding-bottom, 15px)
-            var(--read-padding-left, 15px);
+        padding: var(--read-padding-top, 15px) var(--read-padding-right, 15px)
+            var(--read-padding-bottom, 15px) var(--read-padding-left, 15px);
         font-size: var(--read-font-size, 17px);
         font-family: var(--read-font-family, sans-serif);
         line-height: var(--read-line-height, 1.9);

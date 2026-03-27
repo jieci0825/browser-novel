@@ -16,7 +16,6 @@ const READ_MODE_OPTIONS: { label: string; value: ReadMode }[] = [
 const ANIMATION_TYPE_OPTIONS: { label: string; value: AnimationType }[] = [
     { label: '平移', value: 'slide' },
     { label: '覆盖', value: 'cover' },
-    { label: '仿真', value: 'simulation' },
     { label: '无', value: 'none' },
 ]
 
