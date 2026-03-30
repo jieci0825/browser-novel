@@ -1,0 +1,18 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: browser-novel-server
+    restart: unless-stopped
+    ports:
+      - '5100:5100'
+    volumes:
+      - ./deploy/data:/app/data
+      - ./deploy/logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=5100
+      - DATA_DIR=/app/data
+      - LOG_DIR=/app/logs
+    shm_size: '512m'

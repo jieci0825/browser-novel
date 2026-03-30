@@ -1,7 +1,7 @@
 import log4js from 'log4js'
 import path from 'node:path'
 
-const LOG_DIR = path.resolve(__dirname, '../../logs')
+const LOG_DIR = process.env.LOG_DIR ?? path.resolve(__dirname, '../../logs')
 const LOG_RETAIN_DAYS = 90
 
 log4js.configure({
