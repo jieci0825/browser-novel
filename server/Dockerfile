@@ -18,7 +18,9 @@ FROM node:22-slim
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
+    && sed -i 's|security.debian.org/debian-security|mirrors.aliyun.com/debian-security|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     fonts-wqy-zenhei \
     fonts-freefont-ttf \
