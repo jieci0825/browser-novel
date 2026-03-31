@@ -38,7 +38,6 @@ declare module 'vue' {
     IconMdiHelpCircleOutline: typeof import('~icons/mdi/help-circle-outline')['default']
     IconMdiMagnify: typeof import('~icons/mdi/magnify')['default']
     IconMdiPlaylistEdit: typeof import('~icons/mdi/playlist-edit')['default']
-    IconMdiPlus: typeof import('~icons/mdi/plus')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }
