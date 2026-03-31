@@ -63,9 +63,9 @@ const showHelp = ref(false)
 
 <style scoped lang="scss">
 .bookshelf {
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
     background-color: var(--color-bg);
+    padding-bottom: var(--safe-area-inset-bottom);
 
     &__content {
         padding: 16px;

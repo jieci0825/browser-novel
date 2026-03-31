@@ -21,12 +21,16 @@ function goHome() {
 
 <style scoped lang="scss">
 .not-found {
+    height: 100vh;
+    height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    height: 100dvh;
     background: var(--color-bg);
+
+    @media all and (display-mode: standalone) {
+        height: 100lvh;
+    }
 
     .content {
         display: flex;

@@ -60,6 +60,10 @@ const {
     min-height: 100dvh;
     background-color: var(--color-bg);
 
+    @media all and (display-mode: standalone) {
+        min-height: 100lvh;
+    }
+
     &__content {
         padding: 0 16px;
     }

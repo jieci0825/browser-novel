@@ -41,7 +41,6 @@ const emit = defineEmits<{
     display: flex;
     gap: 12px;
     padding: 10px 16px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
     background-color: var(--color-bg);
     border-top: 1px solid var(--border-default);
 

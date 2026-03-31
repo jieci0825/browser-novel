@@ -300,11 +300,12 @@ function handlePageChange(pageIndex: number) {
 
 <style scoped lang="scss">
 .read-page {
-    height: 100dvh;
+    height: 100vh;
     padding-top: var(--safe-area-top);
     background-color: var(--read-content-bg, #f1f1f1);
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
 
     &-content-wrapper {
         flex: 1;

@@ -31,28 +31,47 @@ const {
                     <div class="skeleton-meta">
                         <div class="skeleton-block skeleton-block--title" />
                         <div class="skeleton-block skeleton-block--text" />
-                        <div class="skeleton-block skeleton-block--text skeleton-block--short" />
+                        <div
+                            class="skeleton-block skeleton-block--text skeleton-block--short"
+                        />
                     </div>
                 </div>
                 <div class="skeleton-intro">
                     <div class="skeleton-block skeleton-block--line" />
                     <div class="skeleton-block skeleton-block--line" />
-                    <div class="skeleton-block skeleton-block--line skeleton-block--short" />
+                    <div
+                        class="skeleton-block skeleton-block--line skeleton-block--short"
+                    />
                 </div>
                 <div class="skeleton-chapters">
                     <div class="skeleton-block skeleton-block--chapter-title" />
-                    <div v-for="i in 6" :key="i" class="skeleton-block skeleton-block--chapter" />
+                    <div
+                        v-for="i in 6"
+                        :key="i"
+                        class="skeleton-block skeleton-block--chapter"
+                    />
                 </div>
             </div>
         </template>
 
         <template v-else-if="error">
             <div class="detail__error">
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                <svg
+                    viewBox="0 0 24 24"
+                    width="48"
+                    height="48"
+                    fill="currentColor"
+                >
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                    />
                 </svg>
                 <p>加载失败</p>
-                <AppButton type="plain" shape="round" @click="fetchData">
+                <AppButton
+                    type="plain"
+                    shape="round"
+                    @click="fetchData"
+                >
                     重新加载
                 </AppButton>
             </div>
@@ -78,10 +97,9 @@ const {
 
 <style scoped lang="scss">
 .detail {
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
     background-color: var(--color-bg);
-    padding-bottom: calc(62px + env(safe-area-inset-bottom));
+    padding-bottom: var(--safe-area-inset-bottom);
 
     &__content {
         display: flex;
@@ -139,7 +157,12 @@ const {
         }
 
         .skeleton-block {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background: linear-gradient(
+                90deg,
+                #f0f0f0 25%,
+                #e0e0e0 50%,
+                #f0f0f0 75%
+            );
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
             border-radius: 4px;
