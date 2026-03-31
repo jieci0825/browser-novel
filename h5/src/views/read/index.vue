@@ -275,6 +275,7 @@ function handlePageChange(pageIndex: number) {
 <style scoped lang="scss">
 .read-page {
     height: 100dvh;
+    padding-top: var(--safe-area-top);
     background-color: var(--read-content-bg, #f1f1f1);
     display: flex;
     flex-direction: column;
