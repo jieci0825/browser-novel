@@ -54,8 +54,8 @@ function handleSubmit() {
     display: flex;
     align-items: center;
     gap: 8px;
-    height: var(--navbar-height);
-    padding: 0 12px;
+    height: calc(var(--navbar-height) + var(--safe-area-top));
+    padding: var(--safe-area-top) 12px 0;
     background-color: var(--color-bg);
     border-bottom: 1px solid var(--border-default);
 

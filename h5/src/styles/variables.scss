@@ -16,4 +16,5 @@
 
     /* 布局 */
     --navbar-height: 48px;
+    --safe-area-top: env(safe-area-inset-top, 0px);
 }
