@@ -20,7 +20,7 @@ export function useBookshelf() {
     const books = ref<Book[]>([])
     const loading = ref(true)
     const layout = ref<BookshelfLayout>(
-        getStorage<BookshelfLayout>(STORAGE_KEY.bookshelfLayout) || 'grid'
+        getStorage<BookshelfLayout>(STORAGE_KEY.bookshelfLayout) || 'list'
     )
     const editMode = ref(false)
     const selectedKeys = ref(new Set<string>())
