@@ -1,19 +1,30 @@
-import { ref, onActivated, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { bookApi } from '@/api'
 import type { BookSearchItem } from '@/api/types/book.type'
 import { sortByRelevance } from '@/utils/search-relevance'
 
-const SCROLL_KEY = 'search-scroll-position'
-const FROM_DETAIL_KEY = 'search-from-detail'
+interface SearchStateCache {
+    keyword: string
+    results: BookSearchItem[]
+    searchDone: boolean
+    scrollY: number
+}
+
+let stateCache: SearchStateCache | null = null
 
 export function useSearch() {
     const router = useRouter()
-    const keyword = ref('')
-    const results = ref<BookSearchItem[]>([])
+
+    const restoring = !!stateCache
+    const keyword = ref(stateCache?.keyword ?? '')
+    const results = ref<BookSearchItem[]>(stateCache?.results ?? [])
     const searching = ref(false)
-    const searchDone = ref(false)
+    const searchDone = ref(stateCache?.searchDone ?? false)
+    const cachedScrollY = stateCache?.scrollY ?? 0
     let abortCtrl: AbortController | null = null
+
+    stateCache = null
 
     async function doSearch() {
         const kw = keyword.value.trim()
@@ -51,8 +62,6 @@ export function useSearch() {
     }
 
     function goToDetail(book: BookSearchItem) {
-        sessionStorage.setItem(FROM_DETAIL_KEY, '1')
-        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY))
         router.push({
             name: 'detail',
             params: { sourceId: book.sourceId, bookId: book.bookId },
@@ -63,14 +72,27 @@ export function useSearch() {
         router.back()
     }
 
-    onActivated(() => {
-        const fromDetail = sessionStorage.getItem(FROM_DETAIL_KEY)
-        if (fromDetail) {
-            sessionStorage.removeItem(FROM_DETAIL_KEY)
-            const scrollY = Number(sessionStorage.getItem(SCROLL_KEY) || 0)
-            sessionStorage.removeItem(SCROLL_KEY)
-            nextTick(() => window.scrollTo(0, scrollY))
+    onBeforeRouteLeave((to) => {
+        if (to.name === 'detail') {
+            stateCache = {
+                keyword: keyword.value,
+                results: results.value,
+                searchDone: searchDone.value,
+                scrollY: window.scrollY,
+            }
+        } else {
+            stateCache = null
         }
+    })
+
+    onMounted(() => {
+        if (restoring) {
+            nextTick(() => window.scrollTo(0, cachedScrollY))
+        }
+    })
+
+    onBeforeUnmount(() => {
+        abortCtrl?.abort()
     })
 
     return {

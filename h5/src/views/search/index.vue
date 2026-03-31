@@ -3,8 +3,6 @@ import { useSearch } from './hooks/use-search'
 import SearchBar from './components/search-bar.vue'
 import SearchBookList from './components/search-book-list.vue'
 
-defineOptions({ name: 'SearchPage' })
-
 const {
     keyword,
     results,
