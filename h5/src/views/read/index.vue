@@ -12,6 +12,7 @@ import { readSettings, initReadSettings } from './config/read-settings'
 import { useReadProgress } from './composables/use-read-progress'
 import PagedReader from './components/paged-reader.vue'
 import ScrollReader from './components/scroll-reader.vue'
+import ReadHeaderBar from './components/read-header-bar.vue'
 import ReadToolbar from './components/read-toolbar.vue'
 import ReadCatalogPopup from './components/read-catalog-popup.vue'
 import ReadSettingsPopup from './components/read-settings-popup.vue'
@@ -25,6 +26,8 @@ const router = useRouter()
 const sourceId = route.params.sourceId as string
 const bookId = route.params.bookId as string
 
+const bookName = ref('')
+const authorName = ref('')
 const chapters = ref<Chapter[]>([])
 const inBookshelf = ref(true)
 const chaptersLoading = ref(true)
@@ -92,12 +95,23 @@ onMounted(async () => {
     await ready
     savedPageIndex.value = consumeInitialPageIndex(currentChapterId.value)
 
+    fetchBookDetail()
     await fetchChapters()
 })
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown)
 })
+
+async function fetchBookDetail() {
+    try {
+        const d = await bookApi.getDetail(sourceId, bookId)
+        bookName.value = d.name
+        authorName.value = d.author
+    } catch {
+        // ignore
+    }
+}
 
 async function fetchChapters() {
     try {
@@ -184,6 +198,10 @@ function handleSettings() {
     settingsVisible.value = true
 }
 
+function handleBack() {
+    router.back()
+}
+
 function handleToggleToolbar() {
     if (catalogVisible.value || settingsVisible.value) return
     toolbarVisible.value = !toolbarVisible.value
@@ -244,6 +262,14 @@ function handlePageChange(pageIndex: number) {
             :total-pages="totalPages"
             :current-chapter-index="currentIndex"
             :total-chapters="chapters.length"
+        />
+
+        <ReadHeaderBar
+            :visible="toolbarVisible"
+            :book-name="bookName"
+            :author-name="authorName"
+            :chapter-name="currentChapterName"
+            @back="handleBack"
         />
 
         <ReadToolbar

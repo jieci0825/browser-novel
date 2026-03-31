@@ -71,7 +71,7 @@ const emit = defineEmits<{
     right: 0;
     z-index: 100;
     background-color: var(--read-content-bg, #f1f1f1);
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid color-mix(in srgb, var(--read-text-color, #999) 30%, transparent);
     padding-bottom: env(safe-area-inset-bottom);
 
     &__row {
@@ -81,7 +81,7 @@ const emit = defineEmits<{
         &--chapter {
             justify-content: space-between;
             padding: 0 8px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            border-bottom: 1px solid color-mix(in srgb, var(--read-text-color, #999) 20%, transparent);
         }
 
         &--actions {
