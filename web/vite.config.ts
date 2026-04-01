@@ -9,9 +9,21 @@ import Icons from 'unplugin-icons/vite'
 import { FileSystemIconLoader } from 'unplugin-icons/loaders'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
     plugins: [
         vue(),
+        command === 'build' && {
+            name: 'inject-device-redirect',
+            transformIndexHtml() {
+                return [
+                    {
+                        tag: 'script',
+                        children: `;(function(){var ua=navigator.userAgent;if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)){window.location.href='http://m.novel.coderjc.cn'}})()`,
+                        injectTo: 'head',
+                    },
+                ]
+            },
+        },
         AutoImport({
             resolvers: [ElementPlusResolver()],
         }),
@@ -71,4 +83,4 @@ export default defineConfig({
             },
         },
     },
-})
+}))
