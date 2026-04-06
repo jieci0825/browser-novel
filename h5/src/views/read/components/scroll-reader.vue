@@ -19,14 +19,16 @@ const props = withDefaults(
         chapterId: string
         chapters: Chapter[]
         initialPageIndex?: number
+        scrollDisabled?: boolean
     }>(),
-    { initialPageIndex: 0 }
+    { initialPageIndex: 0, scrollDisabled: false }
 )
 
 const emit = defineEmits<{
     'toggle-toolbar': []
     'chapter-change': [chapterId: string]
     'page-change': [pageIndex: number]
+    'chapter-load-error': [message: string]
 }>()
 
 const SCROLL_THRESHOLD = 500
@@ -196,12 +198,17 @@ async function loadCurrentChapter(chapterId: string, initialPage = 0) {
 
         await nextTick()
 
+        if (containerRef.value) {
+            containerRef.value.scrollTop = 0
+        }
+
         if (clampedPage > 0) {
             scrollToPage(chapterId, clampedPage)
         }
     } catch {
         if (version !== loadVersion) return
         chapterError.value = '章节加载失败'
+        emit('chapter-load-error', chapterError.value)
     } finally {
         if (version === loadVersion) {
             chapterLoading.value = false
@@ -403,7 +410,14 @@ watch(
         const isLoaded = loadedChapters.value.some(
             c => c.chapterId === newId
         )
-        if (isLoaded) return
+        if (isLoaded) {
+            if (newId !== activeChapterId.value) {
+                activeChapterId.value = newId
+                currentPageIndex.value = 0
+                nextTick(() => scrollToPage(newId, 0))
+            }
+            return
+        }
         loadCurrentChapter(newId)
     }
 )
@@ -449,6 +463,7 @@ defineExpose({
     pages: exposedPages,
     currentPageIndex,
     activeChapterId,
+    retryLoadChapter,
 })
 </script>
 
@@ -456,6 +471,7 @@ defineExpose({
     <div
         ref="containerRef"
         class="scroll-reader"
+        :class="{ 'is-scroll-disabled': scrollDisabled }"
         @click="handleTap"
         @scroll.passive="handleScroll"
     >
@@ -536,6 +552,11 @@ defineExpose({
     &::-webkit-scrollbar {
         display: none;
     }
+
+    &.is-scroll-disabled {
+        overflow-y: hidden;
+    }
+
     background-color: var(--read-content-bg, #f1f1f1);
     color: var(--read-text-color, #000);
 

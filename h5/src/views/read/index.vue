@@ -37,6 +37,8 @@ const scrollReaderRef = ref<InstanceType<typeof ScrollReader> | null>(null)
 const toolbarVisible = ref(false)
 const settingsVisible = ref(false)
 const catalogVisible = ref(false)
+const chapterNavLoading = ref(false)
+const chapterNavError = ref('')
 
 const currentChapterId = computed(() => route.params.chapterId as string)
 
@@ -125,21 +127,26 @@ async function fetchChapters() {
     }
 }
 
-function goChapter(direction: 'prev' | 'next') {
+function goChapter(direction: 'prev' | 'next'): boolean {
     const idx = currentIndex.value + (direction === 'prev' ? -1 : 1)
     const chapter = chapters.value[idx]
-    if (!chapter) return
+    if (!chapter) return false
     toolbarVisible.value = false
     router.replace({
         name: 'read',
         params: { sourceId, bookId, chapterId: chapter.chapterId },
     })
+    return true
 }
 
-/** 通过工具栏或键盘切换章节时，始终从第一页开始 */
+/** 通过工具栏或键盘切换章节时，始终从第一页开始，并展示加载状态 */
 function goChapterFromToolbar(direction: 'prev' | 'next') {
     chapterStartPage.value = 'first'
-    goChapter(direction)
+    chapterNavError.value = ''
+    chapterNavLoading.value = true
+    if (!goChapter(direction)) {
+        chapterNavLoading.value = false
+    }
 }
 
 /** PagedReader 内部跨章翻页后同步路由 */
@@ -215,6 +222,31 @@ function scrollTo(position: 'top' | 'bottom') {
 function handlePageChange(pageIndex: number) {
     savedPageIndex.value = pageIndex
     savePageProgress(pageIndex)
+    if (chapterNavLoading.value) {
+        chapterNavLoading.value = false
+        chapterNavError.value = ''
+    }
+}
+
+function handleChapterLoadError(message: string) {
+    if (chapterNavLoading.value) {
+        chapterNavLoading.value = false
+        chapterNavError.value = message
+    }
+}
+
+function retryChapterNav() {
+    if (!chapterNavError.value) return
+    chapterNavError.value = ''
+    chapterNavLoading.value = true
+    const reader = pagedReaderRef.value ?? scrollReaderRef.value
+    if (reader && 'retryLoadChapter' in reader) {
+        ;(reader as any).retryLoadChapter()
+    }
+}
+
+function dismissChapterNavError() {
+    chapterNavError.value = ''
 }
 </script>
 
@@ -232,9 +264,11 @@ function handlePageChange(pageIndex: number) {
                 :chapters="chapters"
                 :start-page="chapterStartPage"
                 :initial-page-index="savedPageIndex"
+                :gesture-disabled="toolbarVisible"
                 @toggle-toolbar="handleToggleToolbar"
                 @chapter-change="handleChapterChange"
                 @page-change="handlePageChange"
+                @chapter-load-error="handleChapterLoadError"
             />
             <ScrollReader
                 ref="scrollReaderRef"
@@ -244,9 +278,11 @@ function handlePageChange(pageIndex: number) {
                 :chapter-id="currentChapterId"
                 :chapters="chapters"
                 :initial-page-index="savedPageIndex"
+                :scroll-disabled="toolbarVisible"
                 @toggle-toolbar="handleToggleToolbar"
                 @chapter-change="handleChapterChange"
                 @page-change="handlePageChange"
+                @chapter-load-error="handleChapterLoadError"
             />
             <div
                 v-else-if="chaptersLoading"
@@ -263,6 +299,14 @@ function handlePageChange(pageIndex: number) {
             :current-chapter-index="currentIndex"
             :total-chapters="chapters.length"
         />
+
+        <Transition name="overlay-fade">
+            <div
+                v-show="toolbarVisible"
+                class="read-page-overlay"
+                @click="handleToggleToolbar"
+            />
+        </Transition>
 
         <ReadHeaderBar
             :visible="toolbarVisible"
@@ -295,6 +339,25 @@ function handlePageChange(pageIndex: number) {
         />
 
         <ReadSettingsPopup v-model="settingsVisible" />
+
+        <Transition name="overlay-fade">
+            <div
+                v-if="chapterNavLoading || chapterNavError"
+                class="read-page-nav-overlay"
+            >
+                <div v-if="chapterNavLoading" class="read-page-nav-overlay__loading">
+                    <div class="read-page-nav-overlay__spinner" />
+                    <span>加载中...</span>
+                </div>
+                <div v-else-if="chapterNavError" class="read-page-nav-overlay__error">
+                    <span>{{ chapterNavError }}</span>
+                    <div class="read-page-nav-overlay__actions">
+                        <button @click="retryChapterNav">重试</button>
+                        <button @click="dismissChapterNavError">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </div>
 </template>
 
@@ -320,5 +383,90 @@ function handlePageChange(pageIndex: number) {
         color: var(--read-text-color, #999);
         font-size: 14px;
     }
+
+    &-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 99;
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    &-nav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 200;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &__loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        &__spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: nav-spin 0.8s linear infinite;
+        }
+
+        &__error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        &__actions {
+            display: flex;
+            gap: 12px;
+
+            button {
+                padding: 8px 24px;
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 4px;
+                background: transparent;
+                color: #fff;
+                font-size: 14px;
+                cursor: pointer;
+
+                &:active {
+                    opacity: 0.7;
+                }
+            }
+        }
+    }
+}
+
+@keyframes nav-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+    transition: opacity 0.25s ease;
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+    opacity: 0;
 }
 </style>

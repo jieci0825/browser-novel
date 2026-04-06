@@ -20,14 +20,16 @@ const props = withDefaults(
         chapters: Chapter[]
         startPage?: 'first' | 'last'
         initialPageIndex?: number
+        gestureDisabled?: boolean
     }>(),
-    { startPage: 'first', initialPageIndex: 0 }
+    { startPage: 'first', initialPageIndex: 0, gestureDisabled: false }
 )
 
 const emit = defineEmits<{
     'toggle-toolbar': []
     'chapter-change': [chapterId: string]
     'page-change': [pageIndex: number]
+    'chapter-load-error': [message: string]
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -197,6 +199,7 @@ async function loadAndApplyChapter(
     } catch {
         if (version !== loadVersion) return false
         chapterError.value = '章节加载失败'
+        emit('chapter-load-error', chapterError.value)
         return false
     } finally {
         if (version === loadVersion) {
@@ -466,12 +469,15 @@ async function completeFlip(completed: boolean) {
 
 usePageGesture(containerRef, {
     onDragStart(direction) {
+        if (props.gestureDisabled) return
         tryStartFlip(direction)
     },
     onDragging(offsetX) {
+        if (props.gestureDisabled) return
         updateAnimation(offsetX)
     },
     onDragEnd({ offsetX, velocity }) {
+        if (props.gestureDisabled) return
         if (!isAnimating.value || !activeFlipDirection) return
         const pageWidth = containerRef.value?.offsetWidth ?? 1
         const isCorrectDirection =
@@ -484,6 +490,7 @@ usePageGesture(containerRef, {
         completeFlip(completed)
     },
     onTap(zone) {
+        if (props.gestureDisabled && zone !== 'toggle-toolbar') return
         if (zone === 'toggle-toolbar') {
             emit('toggle-toolbar')
             return
@@ -498,6 +505,7 @@ defineExpose({
     pages,
     currentPageIndex,
     activeChapterId,
+    retryLoadChapter,
 })
 </script>
 
