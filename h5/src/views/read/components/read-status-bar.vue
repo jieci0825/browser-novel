@@ -23,7 +23,7 @@ const progressText = computed(() => {
 
 <template>
     <div class="read-status-bar">
-        <span class="read-status-bar__chapter">{{ chapterName }}**</span>
+        <span class="read-status-bar__chapter">{{ chapterName }}</span>
         <div class="read-status-bar__right">
             <span class="read-status-bar__page"
                 >{{ currentPage }}/{{ totalPages }}</span
