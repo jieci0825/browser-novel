@@ -240,11 +240,11 @@ function onClickCapture(e: Event) {
 
     &--list {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         padding: 12px 0;
         border-bottom: 1px solid var(--border-default);
 
-        --w: 65px;
+        --w: 80px;
 
         .book-card__cover {
             flex-shrink: 0;
@@ -253,7 +253,7 @@ function onClickCapture(e: Event) {
             img,
             .book-card__placeholder {
                 width: var(--w);
-                height: 80px;
+                aspect-ratio: 3 / 4;
                 border-radius: 4px;
                 border: 1px solid var(--border-default);
             }
@@ -267,7 +267,7 @@ function onClickCapture(e: Event) {
         .book-card__info {
             flex: 1;
             min-width: 0;
-            margin-left: 12px;
+            margin-left: 14px;
         }
 
         .book-card__header {
@@ -279,7 +279,7 @@ function onClickCapture(e: Event) {
         .book-card__name {
             flex: 1;
             min-width: 0;
-            font-size: 15px;
+            font-size: 16px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -299,8 +299,8 @@ function onClickCapture(e: Event) {
             display: flex;
             align-items: center;
             gap: 4px;
-            margin: 4px 0 0;
-            font-size: 12px;
+            margin: 6px 0 0;
+            font-size: 13px;
             color: var(--text-secondary);
 
             svg {
