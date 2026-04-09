@@ -191,6 +191,8 @@ function handleCatalogSelect(chapterId: string) {
     if (chapterId === currentChapterId.value) return
     chapterStartPage.value = 'first'
     toolbarVisible.value = false
+    chapterNavError.value = ''
+    chapterNavLoading.value = true
     router.replace({
         name: 'read',
         params: { sourceId, bookId, chapterId },
