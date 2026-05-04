@@ -38,20 +38,20 @@ const adapterConfigs: (AdapterConfig | ChainedAdapterConfig)[] = [
     },
 
     {
-        enabled: false,
+        enabled: true,
         adapter: new RuleBasedAdapter(aixiadianzishuRule),
         aspects: defaultAspects,
     },
 
     {
-        enabled: false,
+        enabled: true,
         adapter: new QQReaderAdapter(),
         aspects: defaultAspects,
     },
 
     // 分组书源 —— 链式 fallback
     {
-        enabled: false,
+        enabled: true,
         groupId: 'dy-group',
         groupName: '小说聚合',
         children: [

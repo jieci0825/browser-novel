@@ -60,6 +60,7 @@ export const shenhuaxiaoshuoRule: BookSourceRule = {
         url: '{{baseUrl}}/book/{{bookId}}/{{chapterId}}.html',
         fields: {
             content: '#chaptercontent@html',
+            title: 'h1',
         },
         purify: {
             brToNewline: true,
