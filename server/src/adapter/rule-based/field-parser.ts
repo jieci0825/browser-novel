@@ -92,6 +92,7 @@ function extractValue(el: cheerio.Cheerio<any>, extract: string): string {
         case 'text':
             return el.text().trim()
         case 'html':
+            // 获取当前 元素 里面的 HTML 字符串
             return el.html() ?? ''
         default:
             return el.attr(extract) ?? ''

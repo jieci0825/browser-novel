@@ -389,7 +389,10 @@ export class RuleBasedAdapter implements BookSourceAdapter {
             responseType: 'text',
             headers: extraHeaders,
         })
-        return { data: response.data, headers: response.headers as Record<string, any> }
+        return {
+            data: response.data,
+            headers: response.headers as Record<string, any>,
+        }
     }
 
     /* ======================== internal: html extraction ======================== */
